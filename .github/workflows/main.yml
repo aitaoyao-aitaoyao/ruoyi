@@ -8,12 +8,12 @@ jobs:
         run: |
           # 注意：这里的 --username 后面填你 image_241a74 红色框里显示的那个真实账号
           # 密码填你刚设置的那个 8-32 位的固定密码
-          docker login --username=${{ secrets.ALIYUN_USERNAME }} --password=${{ secrets.ALIYUN_PASSWORD }} registry.cn-hangzhou.aliyuncs.com
+          docker login --username=${{ secrets.ALIYUN_USERNAME }} --password=${{ secrets.ALIYUN_PASSWORD }} crpi-5ezu0fmzoupsrz8z.cn-hangzhou.personal.cr.aliyuncs.com
 
       - name: Pull and Push
         run: |
           docker pull fullstackjack/fastapi-best-architecture:latest
           
           # 根据 image_241a1c，你的命名空间是 aitaoyao_test
-          docker tag fullstackjack/fastapi-best-architecture:latest registry.cn-hangzhou.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
-          docker push registry.cn-hangzhou.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
+          docker tag fullstackjack/fastapi-best-architecture:latest crpi-5ezu0fmzoupsrz8z.cn-hangzhou.personal.cr.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
+          docker push crpi-5ezu0fmzoupsrz8z.cn-hangzhou.personal.cr.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
