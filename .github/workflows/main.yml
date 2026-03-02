@@ -6,13 +6,14 @@ jobs:
     steps:
       - name: Login to Aliyun
         run: |
-          # 替换下面两个词：比如 --username=aitaoyao@aliyun.com --password=MyPassword123
-          docker login --username=15866632935 --password=heqiang930715 registry.cn-hangzhou.aliyuncs.com
+          # 注意：这里的 --username 后面填你 image_241a74 红色框里显示的那个真实账号
+          # 密码填你刚设置的那个 8-32 位的固定密码
+          docker login --username=阿里云账户全名 --password=heqiang930715 registry.cn-hangzhou.aliyuncs.com
 
       - name: Pull and Push
         run: |
           docker pull fullstackjack/fastapi-best-architecture:latest
           
-          # 下面这两行的 [命名空间] 也要换掉
+          # 根据 image_241a1c，你的命名空间是 aitaoyao_test
           docker tag fullstackjack/fastapi-best-architecture:latest registry.cn-hangzhou.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
           docker push registry.cn-hangzhou.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
