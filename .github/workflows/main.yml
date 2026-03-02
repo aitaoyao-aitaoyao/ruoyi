@@ -1,0 +1,17 @@
+name: Push to Aliyun
+on: [workflow_dispatch] # 手动触发
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Aliyun
+        uses: docker/login-action@v2
+        with:
+          registry: registry.cn-hangzhou.aliyuncs.com
+          username: 爱桃夭ai
+          password: heqiang930715
+      - name: Pull and Push
+        run: |
+          docker pull fullstackjack/fastapi-best-architecture:latest
+          docker tag fullstackjack/fastapi-best-architecture:latest registry.cn-hangzhou.aliyuncs.com/[你的命名空间]/fastapi-practice:latest
+          docker push registry.cn-hangzhou.aliyuncs.com/[你的命名空间]/fastapi-practice:latest
