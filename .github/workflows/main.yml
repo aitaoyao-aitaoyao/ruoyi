@@ -8,7 +8,7 @@ jobs:
         run: |
           # 注意：这里的 --username 后面填你 image_241a74 红色框里显示的那个真实账号
           # 密码填你刚设置的那个 8-32 位的固定密码
-          docker login --username=阿里云账户全名 --password=heqiang930715 registry.cn-hangzhou.aliyuncs.com
+          docker login --username=${{ secrets.ALIYUN_USERNAME }} --password=${{ secrets.ALIYUN_PASSWORD }} registry.cn-hangzhou.aliyuncs.com
 
       - name: Pull and Push
         run: |
