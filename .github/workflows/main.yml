@@ -13,5 +13,5 @@ jobs:
       - name: Pull and Push
         run: |
           docker pull fullstackjack/fastapi-best-architecture:latest
-          docker tag fullstackjack/fastapi-best-architecture:latest registry.cn-hangzhou.aliyuncs.com/[你的命名空间]/fastapi-practice:latest
-          docker push registry.cn-hangzhou.aliyuncs.com/[你的命名空间]/fastapi-practice:latest
+          docker tag fullstackjack/fastapi-best-architecture:latest registry.cn-hangzhou.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
+          docker push registry.cn-hangzhou.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
