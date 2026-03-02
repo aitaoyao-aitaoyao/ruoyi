@@ -7,7 +7,7 @@ jobs:
       - name: Login to Aliyun
         run: |
           # 替换下面两个词：比如 --username=aitaoyao@aliyun.com --password=MyPassword123
-          docker login --username=阿里云账户全名 --password=heqiang930715 registry.cn-hangzhou.aliyuncs.com
+          docker login --username=15866632935 --password=heqiang930715 registry.cn-hangzhou.aliyuncs.com
 
       - name: Pull and Push
         run: |
