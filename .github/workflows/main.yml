@@ -7,7 +7,7 @@ jobs:
       - name: Login to Aliyun
         run: |
           # 请将下面的 [账号全称] 和 [访问密码] 替换为真实的（去掉中括号）
-          docker login --username=爱桃夭ai registry.cn-hangzhou.aliyuncs.com --password=heqiang930715
+          docker login --username=阿里云账户全名 registry.cn-hangzhou.aliyuncs.com --password=heqiang930715
           
       - name: Pull and Push
         run: |
