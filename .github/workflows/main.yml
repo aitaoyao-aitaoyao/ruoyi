@@ -4,7 +4,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # --- 登录步骤保持不变，它已经成功了 ---
+      # --- 新增：显式检出代码 ---
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # --- 登录步骤保持不变 ---
       - name: Login to Aliyun
         run: |
           docker login --username=${{ secrets.ALIYUN_USERNAME }} --password=${{ secrets.ALIYUN_PASSWORD }} crpi-5ezu0fmzoupsrz8z.cn-hangzhou.personal.cr.aliyuncs.com
@@ -12,13 +16,18 @@ jobs:
       # --- 修改开始：构建并推送 ---
       - name: Build and Push
         run: |
-          # 1. 构建镜像
-          # 将 my-fastapi-app 替换为您想要的任何镜像名
-          docker build -t my-fastapi-app:latest .
+          # --- 新增：调试信息，查看当前目录和文件 ---
+          echo "Current working directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la
           
-          # 2. 为新镜像打标签，指向您的阿里云仓库
+          # 1. 构建镜像 (修改了这里)
+          # 使用 -f 参数显式指定 Dockerfile 的路径
+          docker build -t my-fastapi-app:latest -f ./Dockerfile .
+
+          # 2. 为新镜像打标签
           docker tag my-fastapi-app:latest crpi-5ezu0fmzoupsrz8z.cn-hangzhou.personal.cr.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
-          
+
           # 3. 推送到阿里云
           docker push crpi-5ezu0fmzoupsrz8z.cn-hangzhou.personal.cr.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
       # --- 修改结束 ---
