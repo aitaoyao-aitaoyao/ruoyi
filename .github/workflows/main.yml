@@ -4,16 +4,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # --- 登录步骤保持不变，它已经成功了 ---
       - name: Login to Aliyun
         run: |
-          # 注意：这里的 --username 后面填你 image_241a74 红色框里显示的那个真实账号
-          # 密码填你刚设置的那个 8-32 位的固定密码
           docker login --username=${{ secrets.ALIYUN_USERNAME }} --password=${{ secrets.ALIYUN_PASSWORD }} crpi-5ezu0fmzoupsrz8z.cn-hangzhou.personal.cr.aliyuncs.com
 
-      - name: Pull and Push
+      # --- 修改开始：构建并推送 ---
+      - name: Build and Push
         run: |
-          docker pull fullstackjack/fastapi-best-architecture:latest
+          # 1. 构建镜像
+          # 将 my-fastapi-app 替换为您想要的任何镜像名
+          docker build -t my-fastapi-app:latest .
           
-          # 根据 image_241a1c，你的命名空间是 aitaoyao_test
-          docker tag fullstackjack/fastapi-best-architecture:latest crpi-5ezu0fmzoupsrz8z.cn-hangzhou.personal.cr.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
+          # 2. 为新镜像打标签，指向您的阿里云仓库
+          docker tag my-fastapi-app:latest crpi-5ezu0fmzoupsrz8z.cn-hangzhou.personal.cr.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
+          
+          # 3. 推送到阿里云
           docker push crpi-5ezu0fmzoupsrz8z.cn-hangzhou.personal.cr.aliyuncs.com/aitaoyao_test/fastapi-practice:latest
+      # --- 修改结束 ---
