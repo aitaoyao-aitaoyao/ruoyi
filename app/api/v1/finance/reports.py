@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.db import get_db
-from app.models import Loan, LoanPlatform, PosSwipe, Income, Expense, RepaymentPlan
+from app.models import Loan, LoanPlatform, PosSwipe, Income, Expense, RepaymentPlan, DebtSnapshot
+from app import crud, schemas
 
 router = APIRouter(prefix="/finance/reports", tags=["finance-reports"])
 
@@ -62,3 +63,8 @@ def gap_analysis(year: int = Query(None), month: int = Query(None), db: Session 
         "total_expense": total_expense,
         "gap": gap,
     }
+
+
+@router.get("/snapshots", response_model=list[schemas.DebtSnapshotRead])
+def get_snapshots(months: int = Query(12, ge=1, le=60), db: Session = Depends(get_db)):
+    return crud.get_snapshots(db, months)
