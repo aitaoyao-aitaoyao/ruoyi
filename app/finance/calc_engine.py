@@ -1,6 +1,5 @@
 """Interest calculation engine — pure functions, no database dependency."""
-import math
-from datetime import date, timedelta
+from datetime import date
 from dateutil.relativedelta import relativedelta
 
 

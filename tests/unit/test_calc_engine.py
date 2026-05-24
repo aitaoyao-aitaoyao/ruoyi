@@ -42,6 +42,14 @@ class TestEqualInstallment:
         assert plan[0]["principal"] == pytest.approx(5000)
         assert plan[0]["interest"] == pytest.approx(100)
 
+    def test_zero_interest(self):
+        plan = calc_equal_installment_plan(amount=12000, monthly_rate=0, periods=12, start_date="2025-01-01")
+        assert len(plan) == 12
+        for p in plan:
+            assert p["principal"] == 1000.0
+            assert p["interest"] == 0.0
+            assert p["total_amount"] == 1000.0
+
 
 class TestInterestFirst:
     def test_12_periods(self):
