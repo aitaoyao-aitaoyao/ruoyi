@@ -13,6 +13,8 @@ from pathlib import Path
 from app.db import engine, Base
 from app.api.v1 import auth, articles, categories, tags, media, users, dashboard
 from app.api.v1.finance import persons, platforms, loans, pos_swipes
+from app.api.v1.finance import credit_cards, card_transactions, card_installments
+from app.api.v1.finance import mortgages, incomes, expenses, fee_configs
 
 # 自动创建所有数据库表（如果表已存在则跳过）
 Base.metadata.create_all(bind=engine)
@@ -45,6 +47,13 @@ app.include_router(persons.router, prefix="/api/v1")
 app.include_router(platforms.router, prefix="/api/v1")
 app.include_router(loans.router, prefix="/api/v1")
 app.include_router(pos_swipes.router, prefix="/api/v1")
+app.include_router(credit_cards.router, prefix="/api/v1")
+app.include_router(card_transactions.router, prefix="/api/v1")
+app.include_router(card_installments.router, prefix="/api/v1")
+app.include_router(mortgages.router, prefix="/api/v1")
+app.include_router(incomes.router, prefix="/api/v1")
+app.include_router(expenses.router, prefix="/api/v1")
+app.include_router(fee_configs.router, prefix="/api/v1")
 
 # 挂载静态文件目录（前端 Vue SPA）
 BASE_DIR = Path(__file__).resolve().parent
