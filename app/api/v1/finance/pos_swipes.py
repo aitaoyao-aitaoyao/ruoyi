@@ -1,0 +1,30 @@
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from app.db import get_db
+from app import crud, schemas
+from app.finance.calc_engine import calc_pos_fee
+
+router = APIRouter(prefix="/finance/pos-swipes", tags=["finance-pos"])
+
+
+@router.post("/", response_model=schemas.PosSwipeRead, status_code=201)
+def create_pos_swipe(data: schemas.PosSwipeCreate, db: Session = Depends(get_db)):
+    if data.fee_rate is None:
+        config = crud.get_active_fee_config(db, "pos_swipe")
+        fee_rate = config.rate if config else 0.006
+    else:
+        fee_rate = data.fee_rate
+    fee = calc_pos_fee(data.amount, fee_rate)
+    data.fee_rate = fee_rate
+    return crud.create_pos_swipe(db, data, fee)
+
+
+@router.get("/", response_model=list[schemas.PosSwipeRead])
+def list_pos_swipes(person_id: int = Query(None), db: Session = Depends(get_db)):
+    return crud.get_pos_swipes(db, person_id)
+
+
+@router.delete("/{swipe_id}", status_code=204)
+def delete_pos_swipe(swipe_id: int, db: Session = Depends(get_db)):
+    if not crud.delete_pos_swipe(db, swipe_id):
+        raise HTTPException(status_code=404, detail="POS swipe not found")
