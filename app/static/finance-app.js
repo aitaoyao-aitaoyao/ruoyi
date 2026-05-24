@@ -16,13 +16,17 @@ async function api(url, opts = {}) {
     return data;
 }
 
+// ---- Global shared toast state ----
+const sharedToast = Vue.reactive({ show: false, message: '', type: 'success' });
+
 // ---- Toast mixin ----
 const ToastMixin = {
-    data() { return { toast: { show: false, message: '', type: 'success' } }; },
     methods: {
         showToast(msg, type = 'success') {
-            this.toast = { show: true, message: msg, type };
-            setTimeout(() => { this.toast.show = false; }, 3000);
+            sharedToast.show = true;
+            sharedToast.message = msg;
+            sharedToast.type = type;
+            setTimeout(() => { sharedToast.show = false; }, 3000);
         },
     },
 };
@@ -61,7 +65,7 @@ const DashboardPage = {
     </div>
 </div>`,
     data() {
-        return { dash: {}, reminders: [], snapshots: [], toast: { show: false, message: '', type: 'success' } };
+        return { dash: {}, reminders: [], snapshots: [] };
     },
     async mounted() {
         try { this.dash = await api('/dashboard'); } catch(e) { this.showToast(e.message, 'error'); }
@@ -898,6 +902,9 @@ const router = VueRouter.createRouter({
 });
 
 const App = {
+    computed: {
+        toast() { return sharedToast; },
+    },
     data() {
         return {
             currentPath: window.location.hash.slice(1) || '/finance/dashboard',
