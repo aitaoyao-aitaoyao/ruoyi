@@ -37,6 +37,8 @@ def _derive_monthly_rate_from_total(total_interest: float, amount: float, period
 
 def calc_equal_installment_plan(amount: float, monthly_rate: float, periods: int, start_date: str) -> list[dict]:
     """Calculate equal installment repayment plan. Returns list of period dicts."""
+    if amount <= 0 or periods <= 0 or monthly_rate < 0:
+        raise ValueError("amount and periods must be positive; monthly_rate must be non-negative")
     if monthly_rate == 0:
         period_amount = amount / periods
         plans = []
@@ -57,7 +59,10 @@ def calc_equal_installment_plan(amount: float, monthly_rate: float, periods: int
     d = date.fromisoformat(start_date)
     for i in range(periods):
         interest = round(remaining * monthly_rate, 2)
-        principal = round(period_payment - interest, 2)
+        if i == periods - 1:
+            principal = round(remaining, 2)
+        else:
+            principal = round(period_payment - interest, 2)
         remaining -= principal
         plans.append({
             "period_no": i + 1,
@@ -71,6 +76,8 @@ def calc_equal_installment_plan(amount: float, monthly_rate: float, periods: int
 
 def calc_interest_first_plan(amount: float, monthly_rate: float, periods: int, start_date: str) -> list[dict]:
     """Interest-first: pay interest each period, principal at the end."""
+    if amount <= 0 or periods <= 0 or monthly_rate < 0:
+        raise ValueError("amount and periods must be positive; monthly_rate must be non-negative")
     period_interest = round(amount * monthly_rate, 2)
     plans = []
     d = date.fromisoformat(start_date)
@@ -94,6 +101,8 @@ def calc_interest_first_plan(amount: float, monthly_rate: float, periods: int, s
 
 def calc_bullet_plan(amount: float, monthly_rate: float, periods: int, start_date: str) -> list[dict]:
     """Bullet repayment: single payment at the end with all principal + accumulated interest."""
+    if amount <= 0 or periods <= 0 or monthly_rate < 0:
+        raise ValueError("amount and periods must be positive; monthly_rate must be non-negative")
     total_interest = round(amount * monthly_rate * periods, 2)
     d = date.fromisoformat(start_date)
     return [{
@@ -106,11 +115,15 @@ def calc_bullet_plan(amount: float, monthly_rate: float, periods: int, start_dat
 
 
 def calc_installment_annual_rate(period_rate: float, periods: int) -> float:
-    """Calculate actual annual rate for credit card installments.
+    """Calculate approximate annual rate for credit card installments using the IRR approximation formula.
     Formula: period_rate * periods * 24 / (periods + 1)"""
+    if period_rate < 0 or periods <= 0:
+        raise ValueError("period_rate must be non-negative and periods must be positive")
     return period_rate * periods * 24.0 / (periods + 1)
 
 
 def calc_pos_fee(amount: float, fee_rate: float) -> float:
     """Calculate POS swipe fee."""
+    if amount <= 0 or fee_rate < 0:
+        raise ValueError("amount must be positive and fee_rate must be non-negative")
     return round(amount * fee_rate, 2)

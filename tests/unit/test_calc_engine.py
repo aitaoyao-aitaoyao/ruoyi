@@ -18,11 +18,11 @@ class TestRateConversion:
         assert convert_to_monthly_rate(rate=0.12, rate_type="annual") == pytest.approx(0.01)
 
     def test_total_interest_rate_derivation_equal_installment(self):
-        r = convert_to_monthly_rate(rate=661.85, rate_type="total_interest", amount=10000, periods=12, method="equal_installment")
+        r = convert_to_monthly_rate(rate=661.88, rate_type="total_interest", amount=10000, periods=12, method="equal_installment")
         assert 0.009 < r < 0.011
 
     def test_unknown_rate_type_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unknown rate_type"):
             convert_to_monthly_rate(rate=0.01, rate_type="unknown")
 
 
@@ -49,6 +49,11 @@ class TestEqualInstallment:
             assert p["principal"] == 1000.0
             assert p["interest"] == 0.0
             assert p["total_amount"] == 1000.0
+
+    def test_last_period_balances_exactly(self):
+        plan = calc_equal_installment_plan(amount=10000, monthly_rate=0.01, periods=12, start_date="2025-01-01")
+        total_principal = sum(p["principal"] for p in plan)
+        assert total_principal == pytest.approx(10000.0)
 
 
 class TestInterestFirst:
@@ -90,3 +95,17 @@ class TestPosFee:
 
     def test_custom_rate(self):
         assert calc_pos_fee(amount=5000, fee_rate=0.005) == 25.0
+
+
+class TestInputValidation:
+    def test_negative_amount_equal_installment(self):
+        with pytest.raises(ValueError):
+            calc_equal_installment_plan(amount=-1000, monthly_rate=0.01, periods=12, start_date="2025-01-01")
+
+    def test_zero_periods(self):
+        with pytest.raises(ValueError):
+            calc_equal_installment_plan(amount=1000, monthly_rate=0.01, periods=0, start_date="2025-01-01")
+
+    def test_negative_rate_pos_fee(self):
+        with pytest.raises(ValueError):
+            calc_pos_fee(amount=1000, fee_rate=-0.01)
