@@ -1,0 +1,41 @@
+<h2>系统架构方案对比</h2>
+<p class="subtitle">基于你的选择：CMS 平台 + Vue3/Tailwind + 全测试覆盖。以下是两种实现路径：</p>
+
+<div class="options">
+  <div class="option" data-choice="full-rewrite" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>重写新项目（推荐）</h3>
+      <p><strong>做法：</strong>在当前目录基础上重写，保留 FastAPI + SQLite 底座，替换全部业务代码和前端。用 Vue3 SPA + Tailwind 构建专业的 CMS 管理后台。</p>
+      <div class="pros-cons" style="margin-top:12px">
+        <div class="pros"><h4>优势</h4><ul>
+          <li>代码干净，无历史包袱</li>
+          <li>目录结构按功能模块组织清晰</li>
+          <li>测试从零覆盖，质量可控</li>
+        </ul></div>
+        <div class="cons"><h4>劣势</h4><ul>
+          <li>改动量大，约 2000+ 行新代码</li>
+          <li>现有的 management/users/tasks 代码要替换</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="option" data-choice="incremental" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>渐进改造现有项目</h3>
+      <p><strong>做法：</strong>保留现有后端，逐个模块替换为 CMS 业务（把 tasks 改成 articles 等），前端逐步迁移到 Vue3。</p>
+      <div class="pros-cons" style="margin-top:12px">
+        <div class="pros"><h4>优势</h4><ul>
+          <li>改动范围小，每次只改一个模块</li>
+          <li>可以一边开发一边学习测试</li>
+        </ul></div>
+        <div class="cons"><h4>劣势</h4><ul>
+          <li>新旧代码混在一起，容易混乱</li>
+          <li>最终代码不够"干净"</li>
+          <li>前端 HTML 文件与 Vue SPA 并存，结构混乱</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>

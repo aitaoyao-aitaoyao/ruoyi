@@ -1,0 +1,198 @@
+<h2>统一记录流水 + 人员区分</h2>
+<p class="subtitle">所有操作可追溯、可按分类筛选、可按人员区分</p>
+
+<style>
+  .txn-table { width:100%; border-collapse: collapse; font-size: 12px; }
+  .txn-table th { background: #1a1a2e; padding: 10px; border:1px solid #333; text-align: left; font-size: 11px; color: #888; text-transform: uppercase; }
+  .txn-table td { padding: 8px 10px; border:1px solid rgba(255,255,255,0.04); }
+  .txn-table tr:hover { background: rgba(255,255,255,0.02); }
+  .type-tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+  .type-tag.loan { background: rgba(233,69,96,0.2); color: #e94560; }
+  .type-tag.pos { background: rgba(79,172,254,0.2); color: #4facfe; }
+  .type-tag.installment { background: rgba(249,202,36,0.2); color: #f9ca24; }
+  .type-tag.card { background: rgba(0,210,160,0.2); color: #00d2a0; }
+  .type-tag.repay { background: rgba(83,52,131,0.2); color: #a855f7; }
+  .person-tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+  .person-tag.self { background: rgba(79,172,254,0.15); color: #4facfe; }
+  .person-tag.spouse { background: rgba(249,202,36,0.15); color: #f9ca24; }
+  .filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .filter-chip { padding: 4px 12px; border-radius: 14px; font-size: 11px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #888; cursor: pointer; }
+  .filter-chip.active { background: rgba(233,69,96,0.15); border-color: #e94560; color: #e94560; }
+</style>
+
+<div class="section">
+  <h3>人员管理</h3>
+  <p class="subtitle">在单用户系统内，通过「人员标签」区分不同人的银行卡、借贷</p>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">核心概念：每个金融实体都关联一个「人员」</div>
+  <div class="mockup-body">
+    <div style="display: flex; gap: 16px;">
+      <div style="flex:1; text-align: center; padding: 16px; background: rgba(79,172,254,0.05); border-radius: 8px;">
+        <div style="font-size: 28px;">👤</div>
+        <div style="font-weight: bold; margin: 8px 0; color: #4facfe;">我</div>
+        <div style="font-size: 11px; color: #aaa;">3张银行卡 · 2笔贷款 · 1台POS</div>
+      </div>
+      <div style="flex:1; text-align: center; padding: 16px; background: rgba(249,202,36,0.05); border-radius: 8px;">
+        <div style="font-size: 28px;">👩</div>
+        <div style="font-weight: bold; margin: 8px 0; color: #f9ca24;">配偶</div>
+        <div style="font-size: 11px; color: #aaa;">2张银行卡 · 1笔贷款 · 1笔分期</div>
+      </div>
+      <div style="flex:1; text-align: center; padding: 16px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px;">
+        <div style="font-size: 28px; opacity: 0.3;">➕</div>
+        <div style="margin: 8px 0; color: #666;">添加成员</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>统一流水记录 - 列表视图</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">筛选栏 + 流水表格</div>
+  <div class="mockup-body">
+    <div class="filter-bar" style="margin-bottom: 16px;">
+      <span style="font-size:11px; color:#666;">筛选：</span>
+      <div class="filter-chip active">全部</div>
+      <div class="filter-chip">💰 借贷</div>
+      <div class="filter-chip">💳 POS刷卡</div>
+      <div class="filter-chip">📦 分期</div>
+      <div class="filter-chip">🏦 信用卡消费</div>
+      <div class="filter-chip">✅ 还款</div>
+      <span style="font-size:11px; color:#666; margin-left: 8px;">人员：</span>
+      <div class="filter-chip active">全部</div>
+      <div class="filter-chip">👤 我</div>
+      <div class="filter-chip">👩 配偶</div>
+      <span style="font-size:11px; color:#666; margin-left: 8px;">时间：</span>
+      <div class="filter-chip">近7天</div>
+      <div class="filter-chip active">近30天</div>
+      <div class="filter-chip">自定义</div>
+    </div>
+
+    <table class="txn-table">
+      <thead>
+        <tr><th>时间</th><th>类型</th><th>人员</th><th>平台/银行</th><th>描述</th><th>金额</th><th>关联</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:#888;">05-24 14:30</td>
+          <td><span class="type-tag pos">POS刷卡</span></td>
+          <td><span class="person-tag self">我</span></td>
+          <td>拉卡拉POS</td>
+          <td style="color:#aaa;">刷招商银行储蓄卡</td>
+          <td style="color:#4facfe;">¥10,000</td>
+          <td style="color:#888; font-size:11px;">手续费¥60</td>
+        </tr>
+        <tr>
+          <td style="color:#888;">05-23 10:15</td>
+          <td><span class="type-tag installment">分期</span></td>
+          <td><span class="person-tag spouse">配偶</span></td>
+          <td>中信银行</td>
+          <td style="color:#aaa;">iPhone 12期免息分期</td>
+          <td style="color:#f9ca24;">¥8,400</td>
+          <td style="color:#888; font-size:11px;">每期¥700 · 第3/12期</td>
+        </tr>
+        <tr>
+          <td style="color:#888;">05-22 09:00</td>
+          <td><span class="type-tag loan">借贷</span></td>
+          <td><span class="person-tag self">我</span></td>
+          <td>借呗</td>
+          <td style="color:#aaa;">消费贷 等额本息12期</td>
+          <td style="color:#e94560;">¥30,000</td>
+          <td style="color:#888; font-size:11px;">月供¥2,685 · 年化14.6%</td>
+        </tr>
+        <tr>
+          <td style="color:#888;">05-20 16:40</td>
+          <td><span class="type-tag card">信用卡消费</span></td>
+          <td><span class="person-tag self">我</span></td>
+          <td>招商银行</td>
+          <td style="color:#aaa;">网购消费</td>
+          <td style="color:#00d2a0;">¥2,300</td>
+          <td style="color:#888; font-size:11px;">尾号8823</td>
+        </tr>
+        <tr>
+          <td style="color:#888;">05-18 11:00</td>
+          <td><span class="type-tag repay">还款</span></td>
+          <td><span class="person-tag self">我</span></td>
+          <td>交通银行</td>
+          <td style="color:#aaa;">信用卡还款</td>
+          <td style="color:#a855f7;">¥11,200</td>
+          <td style="color:#888; font-size:11px;">还清本期账单</td>
+        </tr>
+        <tr>
+          <td style="color:#888;">05-15 08:20</td>
+          <td><span class="type-tag pos">POS刷卡</span></td>
+          <td><span class="person-tag spouse">配偶</span></td>
+          <td>银联POS</td>
+          <td style="color:#aaa;">刷中信储蓄卡</td>
+          <td style="color:#4facfe;">¥5,000</td>
+          <td style="color:#888; font-size:11px;">手续费¥30</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <h3>数据模型变更</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">新增 Person 实体，所有金融实体关联 person_id</div>
+  <div class="mockup-body">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 13px;">
+      <div>
+        <div style="font-weight: bold; margin-bottom: 8px;">新增：<span style="color:#4facfe;">Person</span></div>
+        <div style="color:#aaa; line-height: 1.8;">
+          id, name, relation (本人/配偶/父母等), created_at
+        </div>
+        <div style="margin-top: 8px; font-size: 11px; color: #666;">默认创建「本人」</div>
+      </div>
+      <div>
+        <div style="font-weight: bold; margin-bottom: 8px;">关联字段：<span style="color:#e94560;">person_id</span></div>
+        <div style="color:#aaa; line-height: 1.8;">
+          Loan.person_id<br>
+          PosSwipe.person_id<br>
+          CreditCard.person_id<br>
+          CardInstallment.person_id<br>
+          CreditCardTransaction.person_id<br>
+          Wealth.person_id
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>统一流水视图</h3>
+  <p class="subtitle">不是新增一张流水表，而是通过后端查询聚合各表数据，按时间排序统一展示</p>
+</div>
+
+<div class="mockup">
+  <div class="mockup-body">
+    <div style="font-size: 13px; color: #aaa; line-height: 2;">
+      <b>实现方式：</b>后端提供 <code style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:3px;">GET /api/v1/transactions</code> 接口<br>
+      参数：<code>type</code>（loan/pos/installment/card/repay）、<code>person_id</code>、<code>date_from</code>、<code>date_to</code><br>
+      后端 UNION ALL 查询 Loan + PosSwipe + CardInstallment + CreditCardTransaction + RepaymentPlan 五张表<br>
+      按 created_at 倒序，分页返回统一格式
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>更新后共 9 大模块</h3>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📊 <b>仪表盘</b> <span style="color:#aaa;">— 总览 + 还款提醒</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">💰 <b>借贷管理</b> <span style="color:#aaa;">— 多平台借款</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">💳 <b>POS刷卡</b> <span style="color:#aaa;">— 手续费计算</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">🏦 <b>信用卡管理</b> <span style="color:#aaa;">— 卡片 + 还款日</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📦 <b>分期管理</b> <span style="color:#aaa;">— 手续费 + 年化率</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📈 <b>理财收益</b> <span style="color:#aaa;">— 存款 + 理财</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">🔔 <b>还款提醒</b> <span style="color:#aaa;">— 7日内到期</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📋 <b>统一流水</b> <span style="color:#f9ca24;">— 全部记录可查</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📊 <b>统计报告</b> <span style="color:#aaa;">— 多维度 + 导出</span></div>
+</div>

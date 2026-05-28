@@ -1,0 +1,78 @@
+<h2>底部 5 Tab 功能分组方案</h2>
+<p class="subtitle">15 个现有功能需要合理分配到 5 个 Tab 中。每个 Tab 内部使用顶部横向芯片栏进行二级导航。</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Tab 结构总览</div>
+    <div class="mockup-body" style="padding:16px;background:#0d0d1a;font-family:sans-serif">
+      <div style="font-size:11px;color:#888;margin-bottom:12px">点击底部 Tab 切换，每个 Tab 内有子导航</div>
+
+      <div style="margin-bottom:12px;padding:10px;background:rgba(79,172,254,0.08);border-radius:8px;border-left:3px solid #4facfe">
+        <div style="color:#4facfe;font-weight:bold;font-size:13px">📊 Tab 1: 总览</div>
+        <div style="color:#888;font-size:11px;margin-top:2px">仪表盘（首页）— 无子导航，直接展示</div>
+      </div>
+
+      <div style="margin-bottom:12px;padding:10px;background:rgba(233,69,96,0.08);border-radius:8px;border-left:3px solid #e94560">
+        <div style="color:#e94560;font-weight:bold;font-size:13px">💳 Tab 2: 交易</div>
+        <div style="color:#888;font-size:11px;margin-top:2px">POS刷卡 · 信用卡消费/还款 · 收入 · 支出 · 统一流水</div>
+      </div>
+
+      <div style="margin-bottom:12px;padding:10px;background:rgba(249,202,36,0.08);border-radius:8px;border-left:3px solid #f9ca24">
+        <div style="color:#f9ca24;font-weight:bold;font-size:13px">📈 Tab 3: 报表</div>
+        <div style="color:#888;font-size:11px;margin-top:2px">统计报告 — 利息统计、收支缺口、还款方案、趋势预测</div>
+      </div>
+
+      <div style="margin-bottom:12px;padding:10px;background:rgba(0,210,160,0.08);border-radius:8px;border-left:3px solid #00d2a0">
+        <div style="color:#00d2a0;font-weight:bold;font-size:13px">💰 Tab 4: 负债</div>
+        <div style="color:#888;font-size:11px;margin-top:2px">借贷管理 · 信用卡 · 分期管理 · 房贷管理</div>
+      </div>
+
+      <div style="padding:10px;background:rgba(139,92,246,0.08);border-radius:8px;border-left:3px solid #8b5cf6">
+        <div style="color:#8b5cf6;font-weight:bold;font-size:13px">👤 Tab 5: 我的</div>
+        <div style="color:#888;font-size:11px;margin-top:2px">人员管理 · 借贷平台 · 回收站 · 设置</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">375×667 手机 — Tab 2「交易」展开效果</div>
+    <div class="mockup-body" style="padding:0;background:#0d0d1a;font-family:sans-serif;min-height:500px;display:flex;flex-direction:column">
+      <div style="padding:10px 12px;color:#e94560;font-weight:bold;font-size:14px;border-bottom:1px solid rgba(255,255,255,0.06)">财智管家</div>
+      <div style="padding:8px 12px;display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <span style="background:rgba(233,69,96,0.12);border:1px solid #e94560;color:#e94560;padding:3px 10px;border-radius:14px;font-size:10px;white-space:nowrap">POS刷卡</span>
+        <span style="border:1px solid rgba(255,255,255,0.1);color:#888;padding:3px 10px;border-radius:14px;font-size:10px;white-space:nowrap">信用卡消费</span>
+        <span style="border:1px solid rgba(255,255,255,0.1);color:#888;padding:3px 10px;border-radius:14px;font-size:10px;white-space:nowrap">收入</span>
+        <span style="border:1px solid rgba(255,255,255,0.1);color:#888;padding:3px 10px;border-radius:14px;font-size:10px;white-space:nowrap">支出</span>
+        <span style="border:1px solid rgba(255,255,255,0.1);color:#888;padding:3px 10px;border-radius:14px;font-size:10px;white-space:nowrap">统一流水</span>
+      </div>
+      <div style="flex:1;padding:12px">
+        <div style="padding:8px 0;font-size:12px;color:#888">POS 刷卡记录</div>
+        <div style="background:rgba(26,26,46,0.8);border-radius:8px;padding:10px;margin-bottom:6px;font-size:11px">
+          <div style="display:flex;justify-content:space-between"><span style="color:#fff">张三</span><span style="color:#e94560">¥8,500</span></div>
+          <div style="color:#666;font-size:10px">2026-05-20 · 手续费 ¥51</div>
+        </div>
+        <div style="background:rgba(26,26,46,0.8);border-radius:8px;padding:10px;margin-bottom:6px;font-size:11px">
+          <div style="display:flex;justify-content:space-between"><span style="color:#fff">张三</span><span style="color:#e94560">¥3,200</span></div>
+          <div style="color:#666;font-size:10px">2026-05-15 · 手续费 ¥19</div>
+        </div>
+      </div>
+      <div style="padding:8px 12px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-around;font-size:9px;color:#888">
+        <div style="text-align:center">📊<br>总览</div>
+        <div style="text-align:center;color:#e94560">💳<br>交易</div>
+        <div style="text-align:center">📈<br>报表</div>
+        <div style="text-align:center">💰<br>负债</div>
+        <div style="text-align:center">👤<br>我的</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Tab 内的子导航</h3>
+  <p>每个 Tab 页面顶部使用<strong>横向可滚动的芯片栏</strong>（filter-chip 风格），与现有的 filter-bar 组件保持一致。子页面以组件形式嵌入，切换时不刷新页面。</p>
+</div>
+
+<div class="pros-cons">
+  <div class="pros"><h4>这个分组的优点</h4><ul><li>高频操作（交易、负债查看）可直接访问</li><li>低频管理功能（人员、平台、设置）收进「我的」</li><li>每个 Tab 最多 5 个子项，切换不拥挤</li><li>与现有 filter-chip UI 风格一致</li></ul></div>
+  <div class="cons"><h4>需要确认的问题</h4><ul><li>「交易」Tab 包含 5 个子功能，是否需要拆分？</li><li>「负债」Tab 的信用卡是否和「交易」重复？</li><li>仪表盘上的负债明细卡片原本可点击跳转，现在如何处理？</li></ul></div>
+</div>

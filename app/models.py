@@ -189,6 +189,14 @@ class Loan(Base):
     platform = relationship("LoanPlatform")
     repayments = relationship("RepaymentPlan", back_populates="loan", cascade="all, delete-orphan")
 
+    @property
+    def paid_periods(self):
+        return sum(1 for rp in self.repayments if rp.status == "paid")
+
+    @property
+    def remaining_periods(self):
+        return self.periods - self.paid_periods
+
 
 class RepaymentPlan(Base):
     __tablename__ = "repayment_plans"
@@ -212,6 +220,7 @@ class PosSwipe(Base):
     __tablename__ = "pos_swipes"
     id = Column(Integer, primary_key=True, index=True)
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
+    card_id = Column(Integer, ForeignKey("credit_cards.id"), nullable=True)
     amount = Column(Float, nullable=False)
     fee_rate = Column(Float, nullable=False)
     fee = Column(Float, nullable=False)
@@ -222,6 +231,7 @@ class PosSwipe(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     person = relationship("Person")
+    card = relationship("CreditCard")
 
 
 class CreditCard(Base):
@@ -232,6 +242,7 @@ class CreditCard(Base):
     card_number_last4 = Column(String(4), nullable=False)
     credit_limit = Column(Float, nullable=False)
     current_balance = Column(Float, default=0)
+    interest_rate = Column(Float, default=0.1825)  # 年化透支利率，默认日息万分之五
     bill_day = Column(Integer, nullable=False)
     due_day = Column(Integer, nullable=False)
     status = Column(String(20), default="active")
@@ -248,6 +259,7 @@ class CreditCardTransaction(Base):
     card_id = Column(Integer, ForeignKey("credit_cards.id"), nullable=False)
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
     amount = Column(Float, nullable=False)
+    trans_type = Column(String(10), default="消费")  # 消费 / 还款
     description = Column(String(200), default="")
     trans_date = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -276,6 +288,10 @@ class CardInstallment(Base):
 
     person = relationship("Person")
     card = relationship("CreditCard", back_populates="installments")
+
+    @property
+    def remaining_periods(self):
+        return self.periods - self.paid_periods
 
 
 class Mortgage(Base):
@@ -347,3 +363,13 @@ class DebtSnapshot(Base):
     mortgage_debt = Column(Float, default=0)
     pos_fee_total = Column(Float, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class DeletedRecord(Base):
+    """回收站：存储被删除的记录，支持恢复。"""
+    __tablename__ = "deleted_records"
+    id = Column(Integer, primary_key=True, index=True)
+    table_name = Column(String(50), nullable=False)
+    record_id = Column(Integer, nullable=False)
+    record_data = Column(Text, nullable=False)
+    deleted_at = Column(DateTime, default=datetime.utcnow)

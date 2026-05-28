@@ -1,0 +1,62 @@
+<h2>API 接口设计（~38 个端点）</h2>
+<p class="subtitle">全部返回 JSON，统一使用 Bearer Token 认证。覆盖 RESTful CRUD、状态流转、筛选分页、文件上传</p>
+
+<table style="width:100%;border-collapse:collapse;font-size:0.9rem">
+<thead><tr style="background:rgba(37,99,235,0.2)"><th style="padding:10px;text-align:left">模块</th><th style="padding:10px;text-align:left">方法</th><th style="padding:10px;text-align:left">路径</th><th style="padding:10px;text-align:left">说明</th><th style="padding:10px;text-align:left">权限</th></tr></thead>
+
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td rowspan="6" style="padding:10px;font-weight:600">认证</td><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/token</td><td style="padding:8px">登录获取 JWT</td><td style="padding:8px;color:var(--muted)">公开</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/register</td><td style="padding:8px">用户注册</td><td style="padding:8px;color:var(--muted)">公开</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/me</td><td style="padding:8px">当前用户信息</td><td style="padding:8px;color:var(--muted)">登录</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">PATCH</td><td style="padding:8px">/api/v1/me</td><td style="padding:8px">更新个人资料</td><td style="padding:8px;color:var(--muted)">登录</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">PATCH</td><td style="padding:8px">/api/v1/me/password</td><td style="padding:8px">修改密码</td><td style="padding:8px;color:var(--muted)">登录</td></tr>
+
+<tr style="border-bottom:2px solid rgba(148,163,184,0.3)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/refresh</td><td style="padding:8px">刷新 Token</td><td style="padding:8px;color:var(--muted)">登录</td></tr>
+
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td rowspan="11" style="padding:10px;font-weight:600">文章</td><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/articles</td><td style="padding:8px">文章列表（分页/筛选/搜索）</td><td style="padding:8px;color:var(--muted)">登录</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/articles</td><td style="padding:8px">创建文章（草稿）</td><td style="padding:8px;color:var(--muted)">作者+</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/articles/{id}</td><td style="padding:8px">文章详情</td><td style="padding:8px;color:var(--muted)">登录</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">PATCH</td><td style="padding:8px">/api/v1/articles/{id}</td><td style="padding:8px">更新文章</td><td style="padding:8px;color:var(--muted)">作者本人</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">DELETE</td><td style="padding:8px">/api/v1/articles/{id}</td><td style="padding:8px">删除文章</td><td style="padding:8px;color:var(--muted)">作者/管理员</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/articles/{id}/submit</td><td style="padding:8px">提交审核</td><td style="padding:8px;color:var(--muted)">作者本人</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/articles/{id}/approve</td><td style="padding:8px">审核通过</td><td style="padding:8px;color:#4ade80">编辑</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/articles/{id}/reject</td><td style="padding:8px">审核退回（带原因）</td><td style="padding:8px;color:#4ade80">编辑</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/articles/{id}/publish</td><td style="padding:8px">直接发布</td><td style="padding:8px;color:#4ade80">编辑+</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/articles/{id}/archive</td><td style="padding:8px">归档文章</td><td style="padding:8px;color:var(--muted)">编辑+</td></tr>
+<tr style="border-bottom:2px solid rgba(148,163,184,0.3)"><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/articles/my</td><td style="padding:8px">我的文章</td><td style="padding:8px;color:var(--muted)">作者</td></tr>
+
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td rowspan="3" style="padding:10px;font-weight:600">分类</td><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/categories</td><td style="padding:8px">分类列表</td><td style="padding:8px;color:var(--muted)">公开</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/categories</td><td style="padding:8px">创建分类</td><td style="padding:8px;color:var(--muted)">编辑+</td></tr>
+<tr style="border-bottom:2px solid rgba(148,163,184,0.3)"><td style="padding:8px">DELETE</td><td style="padding:8px">/api/v1/categories/{id}</td><td style="padding:8px">删除分类</td><td style="padding:8px;color:var(--muted)">管理员</td></tr>
+
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td rowspan="3" style="padding:10px;font-weight:600">标签</td><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/tags</td><td style="padding:8px">标签列表 + 文章数</td><td style="padding:8px;color:var(--muted)">公开</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/tags</td><td style="padding:8px">创建标签</td><td style="padding:8px;color:var(--muted)">作者+</td></tr>
+<tr style="border-bottom:2px solid rgba(148,163,184,0.3)"><td style="padding:8px">DELETE</td><td style="padding:8px">/api/v1/tags/{id}</td><td style="padding:8px">删除标签</td><td style="padding:8px;color:var(--muted)">管理员</td></tr>
+
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td rowspan="4" style="padding:10px;font-weight:600">媒体</td><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/media/upload</td><td style="padding:8px">上传图片/文件</td><td style="padding:8px;color:var(--muted)">作者+</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/media</td><td style="padding:8px">媒体列表（分页）</td><td style="padding:8px;color:var(--muted)">登录</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/media/{id}</td><td style="padding:8px">查看/下载文件</td><td style="padding:8px;color:var(--muted)">公开</td></tr>
+<tr style="border-bottom:2px solid rgba(148,163,184,0.3)"><td style="padding:8px">DELETE</td><td style="padding:8px">/api/v1/media/{id}</td><td style="padding:8px">删除文件</td><td style="padding:8px;color:var(--muted)">上传者/管理</td></tr>
+
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td rowspan="5" style="padding:10px;font-weight:600">用户管理</td><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/users</td><td style="padding:8px">用户列表</td><td style="padding:8px;color:#4ade80">管理员</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">POST</td><td style="padding:8px">/api/v1/users</td><td style="padding:8px">创建用户</td><td style="padding:8px;color:#4ade80">管理员</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">PATCH</td><td style="padding:8px">/api/v1/users/{id}</td><td style="padding:8px">更新用户/角色</td><td style="padding:8px;color:#4ade80">管理员</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">DELETE</td><td style="padding:8px">/api/v1/users/{id}</td><td style="padding:8px">停用/删除用户</td><td style="padding:8px;color:#4ade80">管理员</td></tr>
+<tr style="border-bottom:2px solid rgba(148,163,184,0.3)"><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/users/{id}/articles</td><td style="padding:8px">某用户的文章</td><td style="padding:8px;color:var(--muted)">登录</td></tr>
+
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td rowspan="2" style="padding:10px;font-weight:600">仪表盘</td><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/dashboard/stats</td><td style="padding:8px">整体统计</td><td style="padding:8px;color:var(--muted)">登录</td></tr>
+<tr style="border-bottom:1px solid rgba(148,163,184,0.15)"><td style="padding:8px">GET</td><td style="padding:8px">/api/v1/dashboard/recent</td><td style="padding:8px">最近动态</td><td style="padding:8px;color:var(--muted)">登录</td></tr>
+
+</table>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">接口设计要点</div>
+  <div class="mockup-body">
+    <ul style="line-height:2;color:rgba(226,232,240,0.9)">
+      <li>文章列表支持 <code>?status=draft&category_id=1&keyword=xxx&tag=python&page=1&size=20</code> 多条件组合</li>
+      <li>所有 POST/PATCH 请求带 Pydantic 校验，错误返回 422 + 详细字段信息</li>
+      <li>权限控制三层：公开（无需登录）、登录、角色（作者/编辑/管理员）</li>
+      <li>文件上传限制：图片 5MB，其他 10MB，白名单 MIME 类型</li>
+      <li>所有列表接口支持 page/size 分页，返回 total 总数</li>
+    </ul>
+  </div>
+</div>

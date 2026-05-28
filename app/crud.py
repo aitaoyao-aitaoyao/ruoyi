@@ -18,9 +18,10 @@ from sqlalchemy.orm import Session
 
 from app.models import User, Article, Category, Tag, Media, Role, Permission
 from app.models import Person, LoanPlatform, Loan, RepaymentPlan, PosSwipe, CreditCard
-from app.models import CreditCardTransaction, CardInstallment, Mortgage, Income, Expense, FeeConfig, DebtSnapshot
+from app.models import CreditCardTransaction, CardInstallment, Mortgage, Income, Expense, FeeConfig, DebtSnapshot, DeletedRecord
 from app import schemas
 from app.auth import hash_password
+from app.finance.calc_engine import calc_installment_annual_rate
 
 
 def slugify(text: str) -> str:
@@ -476,10 +477,20 @@ def get_persons(db: Session) -> list[Person]:
 def get_person(db: Session, person_id: int) -> Optional[Person]:
     return db.query(Person).filter(Person.id == person_id).first()
 
+def update_person(db: Session, person_id: int, data: schemas.PersonUpdate) -> Optional[Person]:
+    obj = db.query(Person).filter(Person.id == person_id).first()
+    if obj:
+        for key, val in data.model_dump(exclude_unset=True).items():
+            setattr(obj, key, val)
+        db.commit()
+        db.refresh(obj)
+    return obj
+
 def delete_person(db: Session, person_id: int) -> bool:
     person = db.query(Person).filter(Person.id == person_id).first()
     if not person:
         return False
+    _save_deleted_record(db, "persons", person.id, _serialize_record(person))
     db.delete(person)
     db.commit()
     return True
@@ -499,10 +510,20 @@ def get_platforms(db: Session) -> list[LoanPlatform]:
 def get_platform(db: Session, platform_id: int) -> Optional[LoanPlatform]:
     return db.query(LoanPlatform).filter(LoanPlatform.id == platform_id).first()
 
+def update_platform(db: Session, platform_id: int, data: schemas.LoanPlatformUpdate) -> Optional[LoanPlatform]:
+    obj = db.query(LoanPlatform).filter(LoanPlatform.id == platform_id).first()
+    if obj:
+        for key, val in data.model_dump(exclude_unset=True).items():
+            setattr(obj, key, val)
+        db.commit()
+        db.refresh(obj)
+    return obj
+
 def delete_platform(db: Session, platform_id: int) -> bool:
     platform = db.query(LoanPlatform).filter(LoanPlatform.id == platform_id).first()
     if not platform:
         return False
+    _save_deleted_record(db, "loan_platforms", platform.id, _serialize_record(platform))
     db.delete(platform)
     db.commit()
     return True
@@ -529,6 +550,15 @@ def get_loans(db: Session, person_id: Optional[int] = None) -> list[Loan]:
 def get_loan(db: Session, loan_id: int) -> Optional[Loan]:
     return db.query(Loan).filter(Loan.id == loan_id).first()
 
+def update_loan(db: Session, loan_id: int, data: schemas.LoanUpdate) -> Optional[Loan]:
+    obj = db.query(Loan).filter(Loan.id == loan_id).first()
+    if obj:
+        for key, val in data.model_dump(exclude_unset=True).items():
+            setattr(obj, key, val)
+        db.commit()
+        db.refresh(obj)
+    return obj
+
 def update_loan_status(db: Session, loan_id: int, status: str) -> Optional[Loan]:
     loan = db.query(Loan).filter(Loan.id == loan_id).first()
     if loan:
@@ -541,6 +571,7 @@ def delete_loan(db: Session, loan_id: int) -> bool:
     loan = db.query(Loan).filter(Loan.id == loan_id).first()
     if not loan:
         return False
+    _save_deleted_record(db, "loans", loan.id, _serialize_record(loan))
     db.delete(loan)
     db.commit()
     return True
@@ -560,10 +591,22 @@ def pay_repayment(db: Session, repayment_id: int) -> Optional[RepaymentPlan]:
     return rp
 
 
+def delete_repayments_for_loan(db: Session, loan_id: int) -> int:
+    """Delete all repayment plans for a loan. Returns count of deleted rows."""
+    count = db.query(RepaymentPlan).filter(RepaymentPlan.loan_id == loan_id).delete()
+    db.commit()
+    return count
+
+
 # --- PosSwipe ---
 def create_pos_swipe(db: Session, data: schemas.PosSwipeCreate, fee: float = 0) -> PosSwipe:
     swipe = PosSwipe(**data.model_dump(), fee=fee)
     db.add(swipe)
+    # 关联信用卡：刷卡金额增加该卡的已用额度
+    if data.card_id:
+        card = db.query(CreditCard).filter(CreditCard.id == data.card_id).first()
+        if card:
+            card.current_balance = round((card.current_balance or 0) + data.amount, 2)
     db.commit()
     db.refresh(swipe)
     return swipe
@@ -577,10 +620,55 @@ def get_pos_swipes(db: Session, person_id: Optional[int] = None) -> list[PosSwip
 def get_pos_swipe(db: Session, swipe_id: int) -> Optional[PosSwipe]:
     return db.query(PosSwipe).filter(PosSwipe.id == swipe_id).first()
 
+def update_pos_swipe(db: Session, swipe_id: int, data: schemas.PosSwipeUpdate, recalc_fee: bool = False) -> Optional[PosSwipe]:
+    obj = db.query(PosSwipe).filter(PosSwipe.id == swipe_id).first()
+    if not obj:
+        return None
+    old_card_id = obj.card_id
+    old_amount = obj.amount
+    updates = data.model_dump(exclude_unset=True)
+    for key, val in updates.items():
+        setattr(obj, key, val)
+    db.flush()
+
+    new_card_id = updates.get("card_id", old_card_id)
+    new_amount = updates.get("amount", old_amount)
+
+    # 如果金额或费率变化，重新计算手续费
+    if recalc_fee:
+        from app.finance.calc_engine import calc_pos_fee
+        obj.fee = calc_pos_fee(new_amount, obj.fee_rate)
+
+    # 处理信用卡额度变更
+    def adjust_card(card_id, delta):
+        if card_id:
+            card = db.query(CreditCard).filter(CreditCard.id == card_id).first()
+            if card:
+                card.current_balance = round((card.current_balance or 0) + delta, 2)
+
+    if old_card_id == new_card_id:
+        # 同一张卡，金额变化
+        if old_amount != new_amount:
+            adjust_card(old_card_id, new_amount - old_amount)
+    else:
+        # 换了卡：旧卡减掉原来的金额，新卡加上新金额
+        adjust_card(old_card_id, -old_amount)
+        adjust_card(new_card_id, new_amount)
+
+    db.commit()
+    db.refresh(obj)
+    return obj
+
 def delete_pos_swipe(db: Session, swipe_id: int) -> bool:
     swipe = db.query(PosSwipe).filter(PosSwipe.id == swipe_id).first()
     if not swipe:
         return False
+    # 释放关联信用卡的已用额度
+    if swipe.card_id:
+        card = db.query(CreditCard).filter(CreditCard.id == swipe.card_id).first()
+        if card:
+            card.current_balance = round(max(0, (card.current_balance or 0) - swipe.amount), 2)
+    _save_deleted_record(db, "pos_swipes", swipe.id, _serialize_record(swipe))
     db.delete(swipe)
     db.commit()
     return True
@@ -616,6 +704,7 @@ def delete_credit_card(db: Session, card_id: int) -> bool:
     card = db.query(CreditCard).filter(CreditCard.id == card_id).first()
     if not card:
         return False
+    _save_deleted_record(db, "credit_cards", card.id, _serialize_record(card))
     db.delete(card)
     db.commit()
     return True
@@ -627,7 +716,10 @@ def create_card_transaction(db: Session, data: schemas.CreditCardTransactionCrea
     db.add(txn)
     card = db.query(CreditCard).filter(CreditCard.id == data.card_id).first()
     if card:
-        card.current_balance += data.amount
+        if data.trans_type == "还款":
+            card.current_balance = max(0, card.current_balance - data.amount)
+        else:
+            card.current_balance += data.amount
     db.commit()
     db.refresh(txn)
     return txn
@@ -641,10 +733,45 @@ def get_card_transactions(db: Session, card_id: Optional[int] = None,
         q = q.filter(CreditCardTransaction.person_id == person_id)
     return q.order_by(CreditCardTransaction.trans_date.desc()).all()
 
+def get_card_transaction(db: Session, txn_id: int) -> Optional[CreditCardTransaction]:
+    return db.query(CreditCardTransaction).filter(CreditCardTransaction.id == txn_id).first()
+
+def update_card_transaction(db: Session, txn_id: int, data: schemas.CreditCardTransactionUpdate) -> Optional[CreditCardTransaction]:
+    obj = db.query(CreditCardTransaction).filter(CreditCardTransaction.id == txn_id).first()
+    if obj:
+        old_amount = obj.amount
+        old_type = obj.trans_type
+        for key, val in data.model_dump(exclude_unset=True).items():
+            setattr(obj, key, val)
+        # Adjust card balance based on changes
+        card = db.query(CreditCard).filter(CreditCard.id == obj.card_id).first()
+        if card:
+            # Reverse old effect
+            if old_type == "还款":
+                card.current_balance += old_amount
+            else:
+                card.current_balance = max(0, card.current_balance - old_amount)
+            # Apply new effect
+            if obj.trans_type == "还款":
+                card.current_balance = max(0, card.current_balance - obj.amount)
+            else:
+                card.current_balance += obj.amount
+        db.commit()
+        db.refresh(obj)
+    return obj
+
 def delete_card_transaction(db: Session, txn_id: int) -> bool:
     txn = db.query(CreditCardTransaction).filter(CreditCardTransaction.id == txn_id).first()
     if not txn:
         return False
+    # Reverse balance effect before deleting
+    card = db.query(CreditCard).filter(CreditCard.id == txn.card_id).first()
+    if card:
+        if txn.trans_type == "还款":
+            card.current_balance += txn.amount
+        else:
+            card.current_balance = max(0, card.current_balance - txn.amount)
+    _save_deleted_record(db, "credit_card_transactions", txn.id, _serialize_record(txn))
     db.delete(txn)
     db.commit()
     return True
@@ -653,7 +780,8 @@ def delete_card_transaction(db: Session, txn_id: int) -> bool:
 # --- CardInstallment ---
 def create_card_installment(db: Session, data: schemas.CardInstallmentCreate,
                             calc_fields: dict) -> CardInstallment:
-    inst = CardInstallment(**data.model_dump(), **calc_fields)
+    fields = data.model_dump(exclude={"rate_type", "rate_value"})
+    inst = CardInstallment(**fields, **calc_fields)
     db.add(inst)
     db.commit()
     db.refresh(inst)
@@ -671,10 +799,42 @@ def get_card_installments(db: Session, card_id: Optional[int] = None,
 def get_card_installment(db: Session, inst_id: int) -> Optional[CardInstallment]:
     return db.query(CardInstallment).filter(CardInstallment.id == inst_id).first()
 
+def update_card_installment(db: Session, inst_id: int, data: schemas.CardInstallmentUpdate) -> Optional[CardInstallment]:
+    obj = db.query(CardInstallment).filter(CardInstallment.id == inst_id).first()
+    if obj:
+        update_data = data.model_dump(exclude_unset=True)
+        new_amount = update_data.get("amount", obj.amount)
+        new_periods = update_data.get("periods", obj.periods)
+
+        # 已还期数不能超过总期数
+        if "paid_periods" in update_data:
+            update_data["paid_periods"] = min(update_data["paid_periods"], new_periods)
+        if "periods" in update_data and obj.paid_periods > new_periods:
+            update_data["paid_periods"] = new_periods
+
+        # 如果金额或期数变了，基于现有 period_rate 重新计算相关字段
+        if "amount" in update_data or "periods" in update_data:
+            period_rate = obj.period_rate
+            update_data["period_principal"] = round(new_amount / new_periods, 2)
+            update_data["period_fee"] = round(new_amount * period_rate, 2)
+            update_data["total_fee"] = round(new_amount * period_rate * new_periods, 2)
+            update_data["annual_rate"] = round(calc_installment_annual_rate(period_rate, new_periods), 4)
+            update_data["period_total"] = round(update_data["period_principal"] + update_data["period_fee"], 2)
+
+        for key, val in update_data.items():
+            setattr(obj, key, val)
+        db.commit()
+        db.refresh(obj)
+    return obj
+
 def pay_installment_period(db: Session, inst_id: int) -> Optional[CardInstallment]:
     inst = db.query(CardInstallment).filter(CardInstallment.id == inst_id).first()
     if inst and inst.paid_periods < inst.periods:
         inst.paid_periods += 1
+        # Add this period's payment to the card's current balance
+        card = db.query(CreditCard).filter(CreditCard.id == inst.card_id).first()
+        if card:
+            card.current_balance += inst.period_total
         db.commit()
         db.refresh(inst)
     return inst
@@ -683,6 +843,7 @@ def delete_card_installment(db: Session, inst_id: int) -> bool:
     inst = db.query(CardInstallment).filter(CardInstallment.id == inst_id).first()
     if not inst:
         return False
+    _save_deleted_record(db, "card_installments", inst.id, _serialize_record(inst))
     db.delete(inst)
     db.commit()
     return True
@@ -705,6 +866,15 @@ def get_mortgages(db: Session, person_id: Optional[int] = None) -> list[Mortgage
 def get_mortgage(db: Session, mortgage_id: int) -> Optional[Mortgage]:
     return db.query(Mortgage).filter(Mortgage.id == mortgage_id).first()
 
+def update_mortgage(db: Session, mortgage_id: int, data: schemas.MortgageUpdate) -> Optional[Mortgage]:
+    obj = db.query(Mortgage).filter(Mortgage.id == mortgage_id).first()
+    if obj:
+        for key, val in data.model_dump(exclude_unset=True).items():
+            setattr(obj, key, val)
+        db.commit()
+        db.refresh(obj)
+    return obj
+
 def update_mortgage_principal(db: Session, mortgage_id: int, remaining_principal: float) -> Optional[Mortgage]:
     m = db.query(Mortgage).filter(Mortgage.id == mortgage_id).first()
     if m:
@@ -717,6 +887,7 @@ def delete_mortgage(db: Session, mortgage_id: int) -> bool:
     m = db.query(Mortgage).filter(Mortgage.id == mortgage_id).first()
     if not m:
         return False
+    _save_deleted_record(db, "mortgages", m.id, _serialize_record(m))
     db.delete(m)
     db.commit()
     return True
@@ -739,10 +910,23 @@ def get_incomes(db: Session, person_id: Optional[int] = None,
         q = q.filter(Income.period_value == period_value)
     return q.order_by(Income.created_at.desc()).all()
 
+def get_income(db: Session, income_id: int) -> Optional[Income]:
+    return db.query(Income).filter(Income.id == income_id).first()
+
+def update_income(db: Session, income_id: int, data: schemas.IncomeUpdate) -> Optional[Income]:
+    obj = db.query(Income).filter(Income.id == income_id).first()
+    if obj:
+        for key, val in data.model_dump(exclude_unset=True).items():
+            setattr(obj, key, val)
+        db.commit()
+        db.refresh(obj)
+    return obj
+
 def delete_income(db: Session, income_id: int) -> bool:
     inc = db.query(Income).filter(Income.id == income_id).first()
     if not inc:
         return False
+    _save_deleted_record(db, "incomes", inc.id, _serialize_record(inc))
     db.delete(inc)
     db.commit()
     return True
@@ -768,10 +952,23 @@ def get_expenses(db: Session, person_id: Optional[int] = None,
         q = q.filter(Expense.category == category)
     return q.order_by(Expense.expense_date.desc()).all()
 
+def get_expense(db: Session, expense_id: int) -> Optional[Expense]:
+    return db.query(Expense).filter(Expense.id == expense_id).first()
+
+def update_expense(db: Session, expense_id: int, data: schemas.ExpenseUpdate) -> Optional[Expense]:
+    obj = db.query(Expense).filter(Expense.id == expense_id).first()
+    if obj:
+        for key, val in data.model_dump(exclude_unset=True).items():
+            setattr(obj, key, val)
+        db.commit()
+        db.refresh(obj)
+    return obj
+
 def delete_expense(db: Session, expense_id: int) -> bool:
     exp = db.query(Expense).filter(Expense.id == expense_id).first()
     if not exp:
         return False
+    _save_deleted_record(db, "expenses", exp.id, _serialize_record(exp))
     db.delete(exp)
     db.commit()
     return True
@@ -788,15 +985,28 @@ def create_fee_config(db: Session, data: schemas.FeeConfigCreate) -> FeeConfig:
 def get_fee_configs(db: Session) -> list[FeeConfig]:
     return db.query(FeeConfig).all()
 
+def get_fee_config(db: Session, config_id: int) -> Optional[FeeConfig]:
+    return db.query(FeeConfig).filter(FeeConfig.id == config_id).first()
+
 def get_active_fee_config(db: Session, fee_type: str) -> Optional[FeeConfig]:
     return db.query(FeeConfig).filter(
         FeeConfig.fee_type == fee_type, FeeConfig.is_active == True
     ).first()
 
+def update_fee_config(db: Session, config_id: int, data: schemas.FeeConfigCreate) -> Optional[FeeConfig]:
+    fc = db.query(FeeConfig).filter(FeeConfig.id == config_id).first()
+    if fc:
+        for key, val in data.model_dump(exclude_unset=True).items():
+            setattr(fc, key, val)
+        db.commit()
+        db.refresh(fc)
+    return fc
+
 def delete_fee_config(db: Session, config_id: int) -> bool:
     fc = db.query(FeeConfig).filter(FeeConfig.id == config_id).first()
     if not fc:
         return False
+    _save_deleted_record(db, "fee_configs", fc.id, _serialize_record(fc))
     db.delete(fc)
     db.commit()
     return True
@@ -822,3 +1032,97 @@ def get_snapshots(db: Session, months: int = 12) -> list[DebtSnapshot]:
     return db.query(DebtSnapshot).filter(
         DebtSnapshot.snapshot_date >= cutoff
     ).order_by(DebtSnapshot.snapshot_date).all()
+
+
+# --- Recycle Bin helpers ---
+import json
+
+def _serialize_record(obj) -> str:
+    """将 ORM 对象序列化为 JSON 字符串，处理 date/datetime 类型。"""
+    data = {}
+    for col in obj.__table__.columns:
+        val = getattr(obj, col.name)
+        if isinstance(val, (datetime, date)):
+            val = val.isoformat()
+        elif val is not None and not isinstance(val, (int, float, str, bool, type(None))):
+            val = str(val)
+        data[col.name] = val
+    return json.dumps(data, ensure_ascii=False)
+
+
+def _save_deleted_record(db: Session, table_name: str, record_id: int, record_data: str):
+    """保存被删除的记录到回收站。"""
+    dr = DeletedRecord(table_name=table_name, record_id=record_id, record_data=record_data)
+    db.add(dr)
+
+
+def get_deleted_records(db: Session) -> list[DeletedRecord]:
+    return db.query(DeletedRecord).order_by(DeletedRecord.deleted_at.desc()).all()
+
+
+def restore_record(db: Session, deleted_id: int) -> Optional[DeletedRecord]:
+    """从回收站恢复记录。返回恢复后的 DeletedRecord 或 None。"""
+    dr = db.query(DeletedRecord).filter(DeletedRecord.id == deleted_id).first()
+    if not dr:
+        return None
+    record_data = json.loads(dr.record_data)
+    table_name = dr.table_name
+    # Map table name to model class
+    model_map = {
+        "persons": Person, "loan_platforms": LoanPlatform, "loans": Loan,
+        "pos_swipes": PosSwipe, "credit_cards": CreditCard,
+        "credit_card_transactions": CreditCardTransaction,
+        "card_installments": CardInstallment, "mortgages": Mortgage,
+        "incomes": Income, "expenses": Expense, "fee_configs": FeeConfig,
+    }
+    model_cls = model_map.get(table_name)
+    if not model_cls:
+        return None
+    # Convert date strings back to date objects
+    from datetime import date as date_type, datetime as datetime_type
+    for key, val in record_data.items():
+        if val and isinstance(val, str) and len(val) >= 10:
+            try:
+                if 'T' in val:
+                    record_data[key] = datetime_type.fromisoformat(val)
+                elif len(val) == 10:
+                    record_data[key] = date_type.fromisoformat(val)
+            except (ValueError, TypeError):
+                pass
+    # Remove id to let DB auto-increment
+    record_data.pop("id", None)
+    obj = model_cls(**record_data)
+    db.add(obj)
+    db.delete(dr)
+    db.commit()
+    return dr
+
+
+def permanently_delete_record(db: Session, deleted_id: int) -> bool:
+    dr = db.query(DeletedRecord).filter(DeletedRecord.id == deleted_id).first()
+    if not dr:
+        return False
+    db.delete(dr)
+    db.commit()
+    return True
+
+
+def clear_deleted_records(db: Session) -> int:
+    count = db.query(DeletedRecord).count()
+    db.query(DeletedRecord).delete()
+    db.commit()
+    return count
+
+
+def clear_all_finance_data(db: Session) -> dict[str, int]:
+    """清空所有财务相关数据（包括人员），返回各表删除行数。"""
+    counts = {}
+    # 先删子表（有外键依赖），再删主表
+    for model_cls in [RepaymentPlan, CardInstallment, CreditCardTransaction,
+                      PosSwipe, Loan, Mortgage, CreditCard,
+                      Income, Expense, FeeConfig, DebtSnapshot, LoanPlatform, Person]:
+        name = model_cls.__tablename__
+        cnt = db.query(model_cls).delete()
+        counts[name] = cnt
+    db.commit()
+    return counts

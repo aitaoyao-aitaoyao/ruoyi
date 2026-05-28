@@ -1,0 +1,99 @@
+<h2>产品定位：LightPress CMS</h2>
+<p class="subtitle">一个轻量级但"像真的"内容管理平台，专为测试学习设计</p>
+
+<div style="display:grid;gap:18px">
+
+<div class="mockup">
+  <div class="mockup-header">系统定位</div>
+  <div class="mockup-body" style="display:grid;gap:14px">
+    <div style="display:flex;gap:12px;align-items:start">
+      <span style="background:var(--accent);color:#fff;padding:2px 10px;border-radius:12px;font-size:0.8rem">定位</span>
+      <span>相当于一个<strong>精简版 WordPress 后台</strong>，模拟真实 CMS 的完整业务链路</span>
+    </div>
+    <div style="display:flex;gap:12px;align-items:start">
+      <span style="background:var(--accent);color:#fff;padding:2px 10px;border-radius:12px;font-size:0.8rem">用户</span>
+      <span>三种角色：<strong>作者</strong>（写文章、上传图片）、<strong>编辑</strong>（审核、退回、发布）、<strong>管理员</strong>（管用户、看数据）</span>
+    </div>
+    <div style="display:flex;gap:12px;align-items:start">
+      <span style="background:var(--accent);color:#fff;padding:2px 10px;border-radius:12px;font-size:0.8rem">核心流程</span>
+      <span>作者写文章 → 提交审核 → 编辑审核（通过/退回） → 发布 → 上线展示</span>
+    </div>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">技术架构一览</div>
+  <div class="mockup-body">
+    <table style="width:100%;border-collapse:collapse">
+      <tr style="border-bottom:1px solid rgba(148,163,184,0.2)">
+        <td style="padding:10px;color:rgba(226,232,240,0.7)">后端框架</td>
+        <td style="padding:10px"><strong>FastAPI 0.95</strong></td>
+        <td style="padding:10px;color:rgba(226,232,240,0.5)">自动生成 Swagger 文档</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(148,163,184,0.2)">
+        <td style="padding:10px;color:rgba(226,232,240,0.7)">数据库</td>
+        <td style="padding:10px"><strong>SQLite</strong></td>
+        <td style="padding:10px;color:rgba(226,232,240,0.5)">零配置，文件即数据库</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(148,163,184,0.2)">
+        <td style="padding:10px;color:rgba(226,232,240,0.7)">ORM</td>
+        <td style="padding:10px"><strong>SQLAlchemy 2.0</strong></td>
+        <td style="padding:10px;color:rgba(226,232,240,0.5)">现代化 ORM，类型友好</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(148,163,184,0.2)">
+        <td style="padding:10px;color:rgba(226,232,240,0.7)">前端</td>
+        <td style="padding:10px"><strong>Vue 3 + Tailwind CSS</strong></td>
+        <td style="padding:10px;color:rgba(226,232,240,0.5)">CDN 引入，零构建</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(148,163,184,0.2)">
+        <td style="padding:10px;color:rgba(226,232,240,0.7)">认证</td>
+        <td style="padding:10px"><strong>JWT Token</strong></td>
+        <td style="padding:10px;color:rgba(226,232,240,0.5)">真实 Token 机制</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(148,163,184,0.2)">
+        <td style="padding:10px;color:rgba(226,232,240,0.7)">测试</td>
+        <td style="padding:10px"><strong>pytest + httpx + Selenium</strong></td>
+        <td style="padding:10px;color:rgba(226,232,240,0.5)">3 层测试体系</td>
+      </tr>
+      <tr>
+        <td style="padding:10px;color:rgba(226,232,240,0.7)">资源占用</td>
+        <td style="padding:10px"><strong>&lt; 50MB 内存</strong></td>
+        <td style="padding:10px;color:rgba(226,232,240,0.5)">本地开发无压力</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">目录结构（按功能模块组织）</div>
+  <div class="mockup-body">
+    <pre style="font-size:0.85rem;line-height:1.6;color:rgba(226,232,240,0.9)">
+lightpress/
+├── app/
+│   ├── api/v1/           # 路由层，按模块拆分
+│   │   ├── auth.py       # 认证（login/register/me）
+│   │   ├── articles.py   # 文章 CRUD + 审核流程
+│   │   ├── categories.py # 分类管理
+│   │   ├── tags.py       # 标签管理
+│   │   ├── media.py      # 媒体上传/管理
+│   │   ├── users.py      # 用户管理（admin）
+│   │   └── dashboard.py  # 统计数据
+│   ├── models.py         # 7 个数据模型
+│   ├── schemas.py        # Pydantic 请求/响应
+│   ├── crud.py           # 数据库操作层
+│   ├── auth.py           # JWT 认证逻辑
+│   ├── db.py             # 数据库连接
+│   ├── main.py           # 应用入口
+│   └── static/           # Vue SPA 前端（单页面应用）
+├── tests/
+│   ├── conftest.py       # 夹具工厂
+│   ├── unit/             # 单元测试
+│   ├── api/              # 接口测试
+│   └── selenium/         # UI 测试
+├── seed_data.py          # 50+ 条种子数据
+└── requirements.txt
+    </pre>
+  </div>
+</div>
+
+</div>

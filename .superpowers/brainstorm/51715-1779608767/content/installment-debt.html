@@ -1,0 +1,147 @@
+<h2>更新：信用卡分期 + 总负债管控</h2>
+<p class="subtitle">新增信用卡分期业务管理和负债全景监控</p>
+
+<style>
+  .flow-row { display: flex; gap: 16px; margin: 16px 0; }
+  .flow-card {
+    flex: 1;
+    background: linear-gradient(135deg, rgba(26,26,46,0.9), rgba(15,52,96,0.15));
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+  }
+  .flow-card h3 { font-size: 15px; margin-bottom: 12px; }
+  .flow-card .item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 12px; color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .flow-card .item .val { font-weight: bold; color: #fff; }
+  .tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; display: inline-block; margin: 2px; }
+  .tag.red { background: rgba(233,69,96,0.2); color: #e94560; }
+  .tag.blue { background: rgba(79,172,254,0.2); color: #4facfe; }
+  .tag.yellow { background: rgba(249,202,36,0.2); color: #f9ca24; }
+  .tag.green { background: rgba(0,210,160,0.2); color: #00d2a0; }
+</style>
+
+<div class="section">
+  <h3>新增数据实体</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">信用卡分期与负债管控模型</div>
+  <div class="mockup-body">
+    <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="background:#1a1a2e;">
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#e94560;">实体</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#e94560;">核心字段</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#e94560;">说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold;">CreditCard</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">bank, card_number, bill_date, due_date, credit_limit, current_balance</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">信用卡基本信息</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold; color:#f9ca24;">CardInstallment <span class="tag yellow">新增</span></td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">card_id, amount, periods, period_rate, annual_rate, total_fee, start_date, paid_periods</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">信用卡分期记录</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold; color:#e94560;">DebtSnapshot <span class="tag red">新增</span></td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">date, total_debt, total_loan, total_card, total_installment, total_pos_fee</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">每日负债快照（自动生成）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <h3>信用卡分期数据流</h3>
+</div>
+
+<div class="flow-row">
+  <div class="flow-card">
+    <h3 style="color:#4facfe;">录入分期</h3>
+    <div class="item"><span>信用卡</span><span class="val">招行信用卡</span></div>
+    <div class="item"><span>分期金额</span><span class="val">¥12,000</span></div>
+    <div class="item"><span>分期期数</span><span class="val">12期</span></div>
+    <div class="item"><span>每期手续费率</span><span class="val">0.6%</span></div>
+    <div class="item"><span>年化利率(自动算)</span><span class="val" style="color:#f9ca24;">13.27%</span></div>
+    <div class="item"><span>总手续费</span><span class="val" style="color:#e94560;">¥864</span></div>
+  </div>
+  <div class="flow-card">
+    <h3 style="color:#f9ca24;">自动生成还款计划</h3>
+    <div class="item"><span>每期本金</span><span class="val">¥1,000</span></div>
+    <div class="item"><span>每期手续费</span><span class="val">¥72</span></div>
+    <div class="item"><span>每期总还款</span><span class="val" style="color:#e94560;">¥1,072</span></div>
+    <div class="item"><span>已还期数</span><span class="val">3 / 12</span></div>
+    <div class="item"><span>剩余应还</span><span class="val" style="color:#e94560;">¥9,648</span></div>
+  </div>
+  <div class="flow-card">
+    <h3 style="color:#e94560;">负债管控汇总</h3>
+    <div class="item"><span>贷款负债</span><span class="val">¥128,500</span></div>
+    <div class="item"><span>信用卡已用</span><span class="val">¥35,000</span></div>
+    <div class="item"><span>分期余额</span><span class="val">¥9,648</span></div>
+    <div class="item"><span>POS待还</span><span class="val">¥0</span></div>
+    <div class="item" style="border-top:1px solid rgba(233,69,96,0.3); padding-top:8px;"><span>总负债</span><span class="val" style="color:#e94560; font-size:16px;">¥173,148</span></div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>负债管控功能</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">负债全景看板</div>
+  <div class="mockup-body">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+      <div>
+        <div style="font-size:13px; color:#aaa; margin-bottom:12px;">负债构成（饼图占位）</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div><span class="tag red">贷款</span> ¥128,500 — 74.2%</div>
+          <div><span class="tag blue">信用卡消费</span> ¥35,000 — 20.2%</div>
+          <div><span class="tag yellow">分期余额</span> ¥9,648 — 5.6%</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px; color:#aaa; margin-bottom:12px;">负债趋势预警</div>
+        <div style="font-size:12px; color:#aaa;">
+          <div style="padding:8px; background:rgba(233,69,96,0.08); border-radius:6px; margin-bottom:6px;">
+            ⚠️ 负债率：<span style="color:#e94560; font-weight:bold;">67%</span> 已超过警戒线 60%
+          </div>
+          <div style="padding:8px; background:rgba(249,202,36,0.08); border-radius:6px; margin-bottom:6px;">
+            ⚡ 本月到期还款：<span style="color:#f9ca24; font-weight:bold;">¥15,280</span>（3笔）
+          </div>
+          <div style="padding:8px; background:rgba(0,210,160,0.08); border-radius:6px;">
+            ✓ 理财收益可覆盖利息：<span style="color:#00d2a0;">是</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>更新后的完整功能模块列表</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">七大模块</div>
+  <div class="mockup-body">
+    <table style="width:100%; font-size:13px;">
+      <tr><td style="padding:8px; width:30px;">📊</td><td style="padding:8px;"><b>仪表盘</b></td><td style="padding:8px; color:#aaa;">资产负债总览、到期提醒、负债率预警、利息趋势</td></tr>
+      <tr><td style="padding:8px;">💰</td><td style="padding:8px;"><b>借贷管理</b></td><td style="padding:8px; color:#aaa;">多平台借款录入、利率换算、等额本息/先息后本、还款计划</td></tr>
+      <tr><td style="padding:8px;">💳</td><td style="padding:8px;"><b>POS刷卡</b></td><td style="padding:8px; color:#aaa;">刷卡记录、可配费率、手续费自动计算</td></tr>
+      <tr><td style="padding:8px;">🏦</td><td style="padding:8px;"><b>信用卡管理</b></td><td style="padding:8px; color:#aaa;">卡片管理、账单日/还款日、消费额度</td></tr>
+      <tr><td style="padding:8px; color:#f9ca24;">📦</td><td style="padding:8px; color:#f9ca24;"><b>分期管理</b></td><td style="padding:8px; color:#aaa;">分期录入、手续费计算、期数跟踪、年化利率自动换算</td></tr>
+      <tr><td style="padding:8px;">📈</td><td style="padding:8px;"><b>理财收益</b></td><td style="padding:8px; color:#aaa;">定期存款、理财产品、收益对比</td></tr>
+      <tr><td style="padding:8px;">📋</td><td style="padding:8px;"><b>统计报告</b></td><td style="padding:8px; color:#aaa;">多维度图表、时段对比、负债快照、导出报表</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <h3>这个更新后的方案可以吗？确认后我把完整设计写入文档。</h3>
+</div>

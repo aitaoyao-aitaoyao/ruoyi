@@ -1,0 +1,104 @@
+<h2>前端 UI 设计：Vue 3 SPA + Tailwind CSS</h2>
+<p class="subtitle">专业 CMS 管理后台风格，参考 WordPress/Strapi 的设计语言</p>
+
+<div class="mockup">
+  <div class="mockup-header">全局布局（登录后）</div>
+  <div class="mockup-body">
+    <div style="display:flex;min-height:400px;border:1px solid rgba(148,163,184,0.2);border-radius:12px;overflow:hidden">
+      <div class="mock-sidebar" style="width:220px;background:rgba(15,23,42,0.98);padding:20px;">
+        <div style="font-weight:700;font-size:1.1rem;color:#60a5fa;margin-bottom:24px">LightPress</div>
+        <div style="display:grid;gap:8px">
+          <div style="padding:10px 14px;border-radius:10px;background:rgba(37,99,235,0.2);color:#fff">仪表盘</div>
+          <div style="padding:10px 14px;border-radius:10px;color:rgba(226,232,240,0.7)">内容管理</div>
+          <div style="padding:10px 14px;border-radius:10px;color:rgba(226,232,240,0.7)">媒体库</div>
+          <div style="padding:10px 14px;border-radius:10px;color:rgba(226,232,240,0.7)">分类标签</div>
+          <div style="padding:10px 14px;border-radius:10px;color:rgba(226,232,240,0.7)">用户管理</div>
+        </div>
+      </div>
+      <div style="flex:1;background:rgba(11,18,32,0.95);padding:28px">
+        <div style="font-size:0.85rem;color:rgba(226,232,240,0.6);margin-bottom:20px">仪表盘 / 概览</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+          <div style="padding:18px;background:rgba(15,23,42,0.95);border-radius:12px;text-align:center">
+            <div style="font-size:1.8rem;font-weight:700">24</div><div style="font-size:0.8rem;color:rgba(226,232,240,0.6)">总文章</div>
+          </div>
+          <div style="padding:18px;background:rgba(15,23,42,0.95);border-radius:12px;text-align:center">
+            <div style="font-size:1.8rem;font-weight:700;color:#4ade80">18</div><div style="font-size:0.8rem;color:rgba(226,232,240,0.6)">已发布</div>
+          </div>
+          <div style="padding:18px;background:rgba(15,23,42,0.95);border-radius:12px;text-align:center">
+            <div style="font-size:1.8rem;font-weight:700;color:#fbbf24">5</div><div style="font-size:0.8rem;color:rgba(226,232,240,0.6)">待审核</div>
+          </div>
+          <div style="padding:18px;background:rgba(15,23,42,0.95);border-radius:12px;text-align:center">
+            <div style="font-size:1.8rem;font-weight:700">12</div><div style="font-size:0.8rem;color:rgba(226,232,240,0.6)">用户数</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+          <div style="padding:20px;background:rgba(15,23,42,0.95);border-radius:12px">
+            <div style="font-weight:600;margin-bottom:12px">最近文章</div>
+            <div style="display:grid;gap:10px;font-size:0.85rem;color:rgba(226,232,240,0.7)">
+              <div>接口测试完全指南 <span style="float:right;color:#4ade80">已发布</span></div>
+              <div>Selenium 自动化实践 <span style="float:right;color:#fbbf24">待审核</span></div>
+              <div>Pytest 夹具高级用法 <span style="float:right;color:rgba(226,232,240,0.4)">草稿</span></div>
+            </div>
+          </div>
+          <div style="padding:20px;background:rgba(15,23,42,0.95);border-radius:12px">
+            <div style="font-weight:600;margin-bottom:12px">快速操作</div>
+            <div style="display:grid;gap:8px">
+              <button class="mock-button">写文章</button>
+              <button class="mock-button">上传图片</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="split" style="margin-top:16px">
+  <div class="mockup">
+    <div class="mockup-header">文章列表页</div>
+    <div class="mockup-body" style="font-size:0.85rem">
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <select class="mock-input" style="width:auto"><option>全部状态</option></select>
+        <select class="mock-input" style="width:auto"><option>全部分类</option></select>
+        <input class="mock-input" style="flex:1" placeholder="搜索文章...">
+        <button class="mock-button" style="width:auto">+ 写文章</button>
+      </div>
+      <table style="width:100%;font-size:0.85rem">
+        <tr style="border-bottom:1px solid rgba(148,163,184,0.1);color:rgba(226,232,240,0.5)"><td style="padding:8px">标题</td><td style="padding:8px">分类</td><td style="padding:8px">状态</td><td style="padding:8px">操作</td></tr>
+        <tr style="border-bottom:1px solid rgba(148,163,184,0.1)"><td style="padding:8px">接口测试完全指南</td><td style="padding:8px">测试技术</td><td style="padding:8px;color:#4ade80">已发布</td><td style="padding:8px">编辑 | 归档</td></tr>
+        <tr style="border-bottom:1px solid rgba(148,163,184,0.1)"><td style="padding:8px">Selenium 实践</td><td style="padding:8px">自动化</td><td style="padding:8px;color:#fbbf24">待审核</td><td style="padding:8px">查看</td></tr>
+        <tr style="border-bottom:1px solid rgba(148,163,184,0.1)"><td style="padding:8px">Pytest入门</td><td style="padding:8px">Python</td><td style="padding:8px;color:rgba(226,232,240,0.4)">草稿</td><td style="padding:8px">编辑 | 提交 | 删除</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">文章编辑器（弹窗）</div>
+    <div class="mockup-body">
+      <div class="placeholder" style="height:30px;margin-bottom:10px">文章标题</div>
+      <div class="placeholder" style="height:20px;margin-bottom:10px">摘要</div>
+      <div style="display:flex;gap:10px;margin-bottom:10px">
+        <select class="mock-input" style="width:auto"><option>选择分类</option></select>
+        <input class="mock-input" placeholder="添加标签">
+      </div>
+      <div class="placeholder" style="height:180px">富文本编辑区（支持 Markdown 或所见即所得）</div>
+      <div style="margin-top:12px;display:flex;gap:10px">
+        <button class="mock-button">存草稿</button>
+        <button class="mock-button">提交审核</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">Visual 风格规范（Tailwind 暗色主题）</div>
+  <div class="mockup-body" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;font-size:0.85rem">
+    <div><div style="width:40px;height:40px;background:#0f172a;border-radius:8px;margin-bottom:6px"></div>背景: slate-900</div>
+    <div><div style="width:40px;height:40px;background:#1e293b;border-radius:8px;margin-bottom:6px"></div>卡片: slate-800</div>
+    <div><div style="width:40px;height:40px;background:#3b82f6;border-radius:8px;margin-bottom:6px"></div>主色: blue-500</div>
+    <div><div style="width:40px;height:40px;background:#334155;border-radius:8px;margin-bottom:6px"></div>边框: slate-700</div>
+    <div style="color:#4ade80">■ 成功: green-400</div>
+    <div style="color:#fbbf24">■ 警告: amber-400</div>
+    <div style="color:#f87171">■ 危险: red-400</div>
+    <div style="color:#94a3b8">■ 次要: slate-400</div>
+  </div>
+</div>

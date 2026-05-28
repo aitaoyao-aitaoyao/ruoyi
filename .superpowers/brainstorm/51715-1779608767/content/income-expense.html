@@ -1,0 +1,213 @@
+<h2>收入 + 房贷 + 支出 + 缺口分析</h2>
+<p class="subtitle">完整的家庭财务全景：管进、管出、管缺口</p>
+
+<style>
+  .gap-box {
+    padding: 24px;
+    border-radius: 12px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .gap-box.negative { background: linear-gradient(135deg, rgba(233,69,96,0.15), rgba(233,69,96,0.05)); border: 1px solid rgba(233,69,96,0.3); }
+  .gap-box.positive { background: linear-gradient(135deg, rgba(0,210,160,0.15), rgba(0,210,160,0.05)); border: 1px solid rgba(0,210,160,0.3); }
+  .gap-row { display: flex; justify-content: space-around; margin: 12px 0; }
+  .gap-item { text-align: center; }
+  .gap-num { font-size: 22px; font-weight: bold; }
+  .flow-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .flow-col {
+    background: rgba(26,26,46,0.8);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .flow-col h3 { font-size: 14px; margin-bottom: 12px; }
+  .line-item { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .line-item .val { color: #fff; font-weight: bold; }
+</style>
+
+<div class="section">
+  <h3>新增数据实体</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">3 个新模型</div>
+  <div class="mockup-body">
+    <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="background:#1a1a2e;">
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#e94560;">实体</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#e94560;">核心字段</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#e94560;">说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold; color:#00d2a0;">Income</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">person_id, amount, source (工资/兼职/投资等), period_type (月/年), period_value (2025-05), note</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">收入记录</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold; color:#e94560;">Mortgage</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">person_id, bank, total_amount, remaining_principal, rate, rate_type, start_date, end_date, monthly_payment, repay_method</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">房贷管理（本质上也是贷款，但独立管理）</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold; color:#f9ca24;">Expense</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">person_id, amount, category (餐饮/交通/购物/娱乐/医疗等), period_value, note</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">每月日常支出</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <h3>房贷管理</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">房贷详情卡片</div>
+  <div class="mockup-body">
+    <div style="display: flex; gap: 16px;">
+      <div style="flex:1;">
+        <div style="font-size: 11px; color: #666; text-transform: uppercase;">房产</div>
+        <div style="font-weight: bold; font-size: 18px; margin-top: 4px;">XX小区自住房</div>
+        <div style="font-size: 12px; color: #aaa; margin-top: 8px; line-height: 1.8;">
+          贷款银行：建设银行<br>
+          还款方式：等额本息<br>
+          贷款利率：3.85%（年化）
+        </div>
+      </div>
+      <div style="flex:1;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div><div style="font-size: 11px; color: #666;">贷款总额</div><div style="font-weight: bold; margin-top: 2px;">¥1,200,000</div></div>
+          <div><div style="font-size: 11px; color: #666;">剩余本金</div><div style="font-weight: bold; color: #e94560; margin-top: 2px;">¥980,000</div></div>
+          <div><div style="font-size: 11px; color: #666;">月供</div><div style="font-weight: bold; margin-top: 2px;">¥5,620</div></div>
+          <div><div style="font-size: 11px; color: #666;">剩余期数</div><div style="font-weight: bold; margin-top: 2px;">216 / 360期</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>月度收支缺口分析（核心看板）</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">2025年5月 财务全景</div>
+  <div class="mockup-body">
+    <div class="flow-cols">
+      <div class="flow-col">
+        <h3 style="color:#00d2a0;">💰 本月收入</h3>
+        <div class="line-item"><span>工资收入</span><span class="val">¥18,000</span></div>
+        <div class="line-item"><span>兼职收入</span><span class="val">¥3,000</span></div>
+        <div class="line-item"><span>理财收益</span><span class="val">¥350</span></div>
+        <div style="border-top: 1px solid rgba(0,210,160,0.3); margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between;">
+          <span style="font-weight: bold;">收入合计</span><span style="font-weight: bold; font-size: 16px; color: #00d2a0;">¥21,350</span>
+        </div>
+      </div>
+      <div class="flow-col">
+        <h3 style="color:#e94560;">📤 本月支出</h3>
+        <div class="line-item"><span>餐饮</span><span class="val">¥3,200</span></div>
+        <div class="line-item"><span>交通</span><span class="val">¥800</span></div>
+        <div class="line-item"><span>购物</span><span class="val">¥2,500</span></div>
+        <div class="line-item"><span>娱乐</span><span class="val">¥1,000</span></div>
+        <div class="line-item"><span>其他</span><span class="val">¥1,500</span></div>
+        <div style="border-top: 1px solid rgba(233,69,96,0.3); margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between;">
+          <span style="font-weight: bold;">日常支出</span><span style="font-weight: bold; color: #e94560;">¥9,000</span>
+        </div>
+      </div>
+      <div class="flow-col">
+        <h3 style="color:#f9ca24;">🏦 本月债务支出</h3>
+        <div class="line-item"><span>房贷月供</span><span class="val">¥5,620</span></div>
+        <div class="line-item"><span>借呗月供</span><span class="val">¥2,685</span></div>
+        <div class="line-item"><span>信用卡还款</span><span class="val">¥8,500</span></div>
+        <div class="line-item"><span>分期还款</span><span class="val">¥1,072</span></div>
+        <div class="line-item"><span>POS手续费</span><span class="val">¥360</span></div>
+        <div style="border-top: 1px solid rgba(249,202,36,0.3); margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between;">
+          <span style="font-weight: bold;">债务支出</span><span style="font-weight: bold; color: #f9ca24;">¥18,237</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 16px; margin-top: 16px;">
+      <div style="flex: 1;">
+        <div style="font-size: 11px; color: #666; text-transform: uppercase;">总支出 = 日常 + 债务</div>
+        <div style="font-size: 28px; font-weight: bold; color: #e94560; margin-top: 4px;">¥27,237</div>
+      </div>
+      <div style="flex: 1; text-align: center; font-size: 24px; color: #666; display: flex; align-items: center; justify-content: center;">➖</div>
+      <div style="flex: 1; text-align: right;">
+        <div style="font-size: 11px; color: #666; text-transform: uppercase;">总收入</div>
+        <div style="font-size: 28px; font-weight: bold; color: #00d2a0; margin-top: 4px;">¥21,350</div>
+      </div>
+    </div>
+
+    <div class="gap-box negative" style="margin-top: 12px;">
+      <div style="font-size: 12px; color: #888;">本月收支缺口</div>
+      <div style="font-size: 36px; font-weight: bold; color: #e94560;">-¥5,887</div>
+      <div style="font-size: 12px; color: #e94560; margin-top: 4px;">⚠️ 支出超过收入，入不敷出</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>年度缺口趋势</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">月度缺口柱状图（绿=盈余 / 红=缺口）</div>
+  <div class="mockup-body">
+    <div style="display: flex; align-items: flex-end; gap: 12px; height: 160px; padding: 0 16px;">
+      <div style="flex:1; text-align: center;">
+        <div style="height: 80px; background: linear-gradient(to top, #e94560, #e9456040); border-radius: 4px 4px 0 0; position: relative;">
+          <span style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #e94560;">-2.1k</span>
+        </div>
+        <div class="bar-label">1月</div>
+      </div>
+      <div style="flex:1; text-align: center;">
+        <div style="height: 55px; background: linear-gradient(to top, #e94560, #e9456040); border-radius: 4px 4px 0 0; position: relative;">
+          <span style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #e94560;">-1.3k</span>
+        </div>
+        <div class="bar-label">2月</div>
+      </div>
+      <div style="flex:1; text-align: center;">
+        <div style="height: 30px; background: linear-gradient(to top, #e94560, #e9456040); border-radius: 4px 4px 0 0; position: relative;">
+          <span style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #e94560;">-0.5k</span>
+        </div>
+        <div class="bar-label">3月</div>
+      </div>
+      <div style="flex:1; text-align: center;">
+        <div style="height: 40px; background: linear-gradient(to top, #00d2a0, #00d2a040); border-radius: 4px 4px 0 0; position: relative;">
+          <span style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #00d2a0;">+1.2k</span>
+        </div>
+        <div class="bar-label">4月</div>
+      </div>
+      <div style="flex:1; text-align: center;">
+        <div style="height: 100px; background: linear-gradient(to top, #e94560, #e9456040); border-radius: 4px 4px 0 0; position: relative;">
+          <span style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #e94560;">-5.9k</span>
+        </div>
+        <div class="bar-label">5月</div>
+      </div>
+    </div>
+    <div style="text-align: center; margin-top: 16px; font-size: 12px; color: #888;">
+      累计年度缺口：<span style="color: #e94560; font-weight: bold;">-¥8,600</span>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>最终确认：共 10 个功能模块</h3>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📊 <b>仪表盘</b> <span style="color:#aaa;">— 总览 + 还款提醒 + 缺口速览</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">💰 <b>借贷管理</b> <span style="color:#aaa;">— 多平台借款</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">💳 <b>POS刷卡</b> <span style="color:#aaa;">— 手续费计算</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">🏦 <b>信用卡管理</b> <span style="color:#aaa;">— 卡片 + 还款日</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📦 <b>分期管理</b> <span style="color:#aaa;">— 手续费 + 年化率</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">🏠 <b>房贷管理</b> <span style="color:#e94560;">— 剩余本金 + 利息</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">💵 <b>收入管理</b> <span style="color:#00d2a0;">— 月/年收入录入</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">🧾 <b>支出管理</b> <span style="color:#f9ca24;">— 日常花费录入</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📋 <b>统一流水</b> <span style="color:#aaa;">— 全部记录可查</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📊 <b>统计报告</b> <span style="color:#aaa;">— 多维度 + 收支缺口分析</span></div>
+</div>

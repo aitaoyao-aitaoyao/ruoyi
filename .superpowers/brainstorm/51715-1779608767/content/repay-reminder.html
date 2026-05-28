@@ -1,0 +1,138 @@
+<h2>还款日期提醒功能</h2>
+<p class="subtitle">信用卡还款日设置 + 7日内还款提醒看板</p>
+
+<style>
+  .remind-row { display: flex; gap: 16px; margin: 16px 0; }
+  .remind-box {
+    flex: 1;
+    background: linear-gradient(135deg, rgba(26,26,46,0.9), rgba(15,52,96,0.1));
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .remind-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+  .remind-item.urgent { background: rgba(233,69,96,0.12); border-left: 3px solid #e94560; }
+  .remind-item.warning { background: rgba(249,202,36,0.1); border-left: 3px solid #f9ca24; }
+  .remind-item.normal { background: rgba(79,172,254,0.08); border-left: 3px solid #4facfe; }
+  .days-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+  .days-badge.red { background: #e94560; color: white; }
+  .days-badge.yellow { background: #f9ca24; color: #000; }
+  .days-badge.blue { background: #4facfe; color: white; }
+  .amount { font-weight: bold; color: #fff; }
+  .card-tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: rgba(255,255,255,0.06); color: #888; margin-left: 6px; }
+</style>
+
+<div class="section">
+  <h3>信用卡还款日设置</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">每张卡独立设置账单日 + 还款日</div>
+  <div class="mockup-body">
+    <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="background:#1a1a2e;">
+          <th style="padding:10px; border:1px solid #333; text-align:left;">银行</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left;">卡号后4位</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left;">额度</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#f9ca24;">账单日</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#e94560;">还款日</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left;">本期账单</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:10px; border:1px solid #333;">招商银行</td><td style="padding:10px; border:1px solid #333; color:#aaa;">8823</td><td style="padding:10px; border:1px solid #333;">¥50,000</td><td style="padding:10px; border:1px solid #333; color:#f9ca24;">每月5日</td><td style="padding:10px; border:1px solid #333; color:#e94560;">每月25日</td><td style="padding:10px; border:1px solid #333; color:#e94560;">¥8,500</td></tr>
+        <tr><td style="padding:10px; border:1px solid #333;">中信银行</td><td style="padding:10px; border:1px solid #333; color:#aaa;">6612</td><td style="padding:10px; border:1px solid #333;">¥30,000</td><td style="padding:10px; border:1px solid #333; color:#f9ca24;">每月12日</td><td style="padding:10px; border:1px solid #333; color:#e94560;">每月1日</td><td style="padding:10px; border:1px solid #333; color:#4facfe;">¥2,300</td></tr>
+        <tr><td style="padding:10px; border:1px solid #333;">交通银行</td><td style="padding:10px; border:1px solid #333; color:#aaa;">3391</td><td style="padding:10px; border:1px solid #333;">¥20,000</td><td style="padding:10px; border:1px solid #333; color:#f9ca24;">每月20日</td><td style="padding:10px; border:1px solid #333; color:#e94560;">每月10日</td><td style="padding:10px; border:1px solid #333; color:#e94560;">¥11,200</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <h3>仪表盘 - 最近7天还款提醒</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">还款提醒组件（显示在仪表盘顶部或侧边）</div>
+  <div class="mockup-body">
+    <div style="margin-bottom: 12px; font-size: 13px; color: #aaa;">📅 假设今天为 <b>5月24日</b>，未来7天：5月24日 ~ 5月30日</div>
+
+    <div class="remind-item urgent">
+      <div><span class="days-badge red">还剩1天</span> 交通银行 <span class="card-tag">3391</span></div>
+      <div>还款日: <b>5月25日</b></div>
+      <div class="amount" style="color:#e94560;">¥11,200</div>
+    </div>
+
+    <div class="remind-item warning">
+      <div><span class="days-badge yellow">还剩3天</span> 借呗 <span class="card-tag">贷款</span></div>
+      <div>还款日: <b>5月27日</b></div>
+      <div class="amount" style="color:#f9ca24;">¥3,580</div>
+    </div>
+
+    <div class="remind-item warning">
+      <div><span class="days-badge yellow">还剩4天</span> 招商银行 <span class="card-tag">8823 分期</span></div>
+      <div>还款日: <b>5月28日</b></div>
+      <div class="amount" style="color:#f9ca24;">¥1,072</div>
+    </div>
+
+    <div class="remind-item normal">
+      <div><span class="days-badge blue">还剩7天</span> 中信银行 <span class="card-tag">6612</span></div>
+      <div>还款日: <b>5月30日</b></div>
+      <div class="amount" style="color:#4facfe;">¥2,300</div>
+    </div>
+
+    <div style="margin-top: 16px; padding: 12px; background: rgba(233,69,96,0.08); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="font-size: 12px; color: #888;">7日内需还总额</div>
+        <div style="font-size: 24px; font-weight: bold; color: #e94560;">¥18,152</div>
+      </div>
+      <div style="text-align: right; font-size: 12px; color: #888;">
+        <div>4笔待还</div>
+        <div style="color: #e94560;">1笔即将逾期</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>还款提醒的数据来源</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">汇总三种还款来源</div>
+  <div class="mockup-body">
+    <div style="display: flex; gap: 16px;">
+      <div style="flex:1; text-align: center; padding: 16px;">
+        <div style="font-size: 24px;">💳</div>
+        <div style="font-weight: bold; margin: 8px 0;">信用卡账单</div>
+        <div style="font-size: 12px; color: #aaa;">根据 card 表的 bill_date + due_date 计算当期账单，到期前提醒</div>
+      </div>
+      <div style="flex:1; text-align: center; padding: 16px;">
+        <div style="font-size: 24px;">📦</div>
+        <div style="font-weight: bold; margin: 8px 0;">分期还款</div>
+        <div style="font-size: 12px; color: #aaa;">CardInstallment 每期还款日自动纳入提醒</div>
+      </div>
+      <div style="flex:1; text-align: center; padding: 16px;">
+        <div style="font-size: 24px;">💰</div>
+        <div style="font-weight: bold; margin: 8px 0;">贷款还款</div>
+        <div style="font-size: 12px; color: #aaa;">Loan RepaymentPlan 下期还款日到期提醒</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>最终确认：共8大功能模块</h3>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📊 <b>仪表盘</b> <span style="color:#aaa;">— 总览 + 还款提醒</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">💰 <b>借贷管理</b> <span style="color:#aaa;">— 多平台借款</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">💳 <b>POS刷卡</b> <span style="color:#aaa;">— 手续费计算</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">🏦 <b>信用卡管理</b> <span style="color:#aaa;">— 卡片+还款日</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📦 <b>分期管理</b> <span style="color:#aaa;">— 手续费+年化率</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📈 <b>理财收益</b> <span style="color:#aaa;">— 存款+理财</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">🔔 <b>还款提醒</b> <span style="color:#f9ca24;">— 7日内到期汇总</span></div>
+  <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">📋 <b>统计报告</b> <span style="color:#aaa;">— 多维度+导出</span></div>
+</div>

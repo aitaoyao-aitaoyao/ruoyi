@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinManager - 个人财务管理</title>
+    <title>财智管家 - 个人财务管理平台</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
     <script src="https://unpkg.com/echarts@5/dist/echarts.min.js"></script>
@@ -21,17 +21,18 @@
             --border: rgba(255,255,255,0.06);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-primary); color: var(--text); display: flex; min-height: 100vh; }
-        .sidebar { width: 200px; background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 20px 0; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 10; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-primary); color: var(--text); min-height: 100vh; }
+        .sidebar { width: 200px; background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 20px 0 80px; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 10; }
         .sidebar .logo { padding: 0 20px 24px; font-size: 18px; font-weight: bold; color: var(--red); }
         .sidebar .nav-item { padding: 10px 20px; color: var(--text-secondary); font-size: 13px; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; display: block; text-decoration: none; }
         .sidebar .nav-item:hover, .sidebar .nav-item.active { color: var(--text); background: rgba(233,69,96,0.08); border-left-color: var(--red); }
-        .main { margin-left: 200px; flex: 1; padding: 24px; min-height: 100vh; }
-        .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
-        @media (max-width: 1200px) { .stat-cards { grid-template-columns: repeat(2, 1fr); } }
-        .stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; backdrop-filter: blur(10px); }
-        .stat-card .label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
-        .stat-card .value { font-size: 26px; font-weight: bold; margin-top: 4px; }
+        .main { margin-left: 200px; padding: 24px; min-height: 100vh; }
+        .stat-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+        @media (max-width: 1100px) { .stat-cards { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 700px) { .stat-cards { grid-template-columns: repeat(2, 1fr); } }
+        .stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(10px); }
+        .stat-card .label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-card .value { font-size: 22px; font-weight: bold; margin-top: 2px; }
         .stat-card .value.red { color: var(--red); }
         .stat-card .value.green { color: var(--green); }
         .stat-card .value.yellow { color: var(--yellow); }
@@ -92,16 +93,45 @@
         .pagination { display: flex; gap: 8px; justify-content: center; margin-top: 16px; align-items: center; font-size: 12px; }
         .section-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
         .section-card h3 { font-size: 14px; margin-bottom: 12px; color: var(--blue); }
+
+        /* Login Page */
+        .login-page { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 100; }
+        .login-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .login-card { position: relative; z-index: 1; background: rgba(19,19,43,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(79,172,254,0.15); border-radius: 20px; padding: 48px 40px; width: 400px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(79,172,254,0.08); }
+        .login-brand { text-align: center; margin-bottom: 36px; }
+        .login-logo { font-size: 32px; font-weight: bold; color: var(--red); letter-spacing: 4px; }
+        .login-subtitle { font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 3px; margin-top: 6px; text-transform: uppercase; }
+        .login-form { display: flex; flex-direction: column; gap: 16px; }
+        .login-input-group input { width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: var(--text); font-size: 14px; transition: all 0.3s; outline: none; }
+        .login-input-group input:focus { border-color: rgba(79,172,254,0.4); box-shadow: 0 0 0 3px rgba(79,172,254,0.08); background: rgba(255,255,255,0.06); }
+        .login-input-group input::placeholder { color: rgba(255,255,255,0.2); }
+        .login-btn { padding: 14px; background: linear-gradient(135deg, #e94560, #d03a50); border: none; border-radius: 10px; color: white; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.3s; letter-spacing: 4px; }
+        .login-btn:hover:not(:disabled) { background: linear-gradient(135deg, #f05670, #e94560); box-shadow: 0 4px 20px rgba(233,69,96,0.3); transform: translateY(-1px); }
+        .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .login-error { color: var(--red); font-size: 12px; text-align: center; padding: 8px; background: rgba(233,69,96,0.08); border-radius: 6px; border: 1px solid rgba(233,69,96,0.15); }
+
+        /* Sidebar User */
+        .sidebar-user { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 20px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.2); }
+        .sidebar-user-info { display: flex; align-items: center; gap: 10px; }
+        .sidebar-user-avatar { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #e94560, #4facfe); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; }
+        .sidebar-user-name { font-size: 13px; color: var(--text); }
     </style>
 </head>
 <body>
     <div id="app">
-        <nav class="sidebar">
-            <div class="logo">FinManager</div>
+        <nav class="sidebar" v-if="currentPath !== '/finance/login'">
+            <div class="logo">财智管家</div>
             <a v-for="item in navItems" :key="item.path" class="nav-item" :class="{ active: currentPath === item.path }"
                :href="item.hash" @click.prevent="navigate(item.path)">{{ item.icon }} {{ item.label }}</a>
+            <div class="sidebar-user" v-if="username">
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-avatar">{{ username.charAt(0).toUpperCase() }}</div>
+                    <div class="sidebar-user-name">{{ username }}</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" @click="logout" style="width:100%;margin-top:8px">退出登录</button>
+            </div>
         </nav>
-        <main class="main">
+        <main class="main" :style="{ marginLeft: currentPath === '/finance/login' ? '0' : '200px' }">
             <router-view></router-view>
         </main>
         <div v-if="toast.show" class="toast" :class="toast.type">{{ toast.message }}</div>

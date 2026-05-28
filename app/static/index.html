@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LightPress CMS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="/static/app.js" defer></script>
+<style>
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+</style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+<div id="app">
+  <div v-if="loading" class="flex items-center justify-center h-screen">
+    <div class="text-slate-400 text-lg">加载中...</div>
+  </div>
+  <div v-else-if="currentRoute === 'login'" class="min-h-screen flex items-center justify-center p-4">
+    <login-form @login="onLogin"></login-form>
+  </div>
+  <div v-else class="flex min-h-screen">
+    <sidebar :current-route="currentRoute" :user="user" @navigate="navigate" @logout="logout"></sidebar>
+    <main class="flex-1 p-6 overflow-auto">
+      <div class="max-w-6xl mx-auto">
+        <dashboard v-if="currentRoute === 'dashboard'" :user="user" :stats="stats" :recent="recent" @navigate="navigate"></dashboard>
+        <article-list v-else-if="currentRoute === 'articles'" :user="user" @navigate="navigate"></article-list>
+        <article-editor v-else-if="currentRoute === 'articles/new'" :user="user" @done="navigate('articles')"></article-editor>
+        <article-editor v-else-if="currentRoute === 'articles/edit'" :article-id="routeParam" :user="user" @done="navigate('articles')"></article-editor>
+        <media-library v-else-if="currentRoute === 'media'" :user="user"></media-library>
+        <category-manager v-else-if="currentRoute === 'categories'" :user="user"></category-manager>
+        <tag-manager v-else-if="currentRoute === 'tags'" :user="user"></tag-manager>
+        <user-manager v-else-if="currentRoute === 'users'" :user="user"></user-manager>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

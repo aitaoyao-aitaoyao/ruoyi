@@ -1,0 +1,29 @@
+<h2>你想要的 CMS 有多"真实"？</h2>
+<p class="subtitle">功能越丰富，测试场景就越多。但不能太庞大导致你无法驾驭。选一个适合的深度：</p>
+
+<div class="options">
+  <div class="option" data-choice="medium" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>精简但真实（推荐）</h3>
+      <p><strong>核心模块：</strong>文章管理、分类/标签、富文本编辑、媒体库、多角色权限（作者/编辑/管理员）、文章审核流程。</p>
+      <p><strong>测试场景：</strong>~40 个接口，完整的工作流测试、权限边界、文件上传，前后端分离的 SPA 界面。</p>
+      <p>相当于一个简化版 WordPress 后台，够"真"但不过载。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="minimal" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>最小可用</h3>
+      <p>文章 CRUD + 分类 + 用户认证。~20 个接口，简单的前端页面。快速上手但练习场景有限。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="full" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>全功能 CMS</h3>
+      <p>以上全部 + 评论系统、站点配置、SEO 元数据、API Token 管理、数据统计仪表盘、多语言、自定义字段。</p>
+      <p>~60+ 接口，丰富但开发和维护成本高。</p>
+    </div>
+  </div>
+</div>

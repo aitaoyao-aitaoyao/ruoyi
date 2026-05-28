@@ -1,0 +1,117 @@
+<h2>贷款管理平台 - 功能模块总览</h2>
+<p class="subtitle">基于现有 FastAPI + SQLite + Vue 3 架构，新增财务模块，前端重新设计为金融主题</p>
+
+<div class="section">
+  <h3>核心功能模块</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">系统架构</div>
+  <div class="mockup-body">
+    <table style="width:100%; border-collapse: collapse;">
+      <tr>
+        <td style="border:1px solid #333; padding:12px; text-align:center; background:#1a1a2e; width:25%;">
+          <div style="font-weight:bold; color:#e94560; font-size:16px;">仪表盘</div>
+          <div style="font-size:12px; color:#aaa; margin-top:4px;">资产负债总览<br>利息趋势图<br>本月还款提醒</div>
+        </td>
+        <td style="border:1px solid #333; padding:12px; text-align:center; background:#1a1a2e; width:25%;">
+          <div style="font-weight:bold; color:#0f3460; font-size:16px;">借贷管理</div>
+          <div style="font-size:12px; color:#aaa; margin-top:4px;">借款记录录入<br>还款计划表<br>利息自动计算</div>
+        </td>
+        <td style="border:1px solid #333; padding:12px; text-align:center; background:#1a1a2e; width:25%;">
+          <div style="font-weight:bold; color:#16213e; font-size:16px;">POS刷卡</div>
+          <div style="font-size:12px; color:#aaa; margin-top:4px;">刷卡记录录入<br>自定义费率<br>手续费汇总</div>
+        </td>
+        <td style="border:1px solid #333; padding:12px; text-align:center; background:#1a1a2e; width:25%;">
+          <div style="font-weight:bold; color:#533483; font-size:16px;">统计报告</div>
+          <div style="font-size:12px; color:#aaa; margin-top:4px;">多维度图表<br>时段对比<br>导出报表</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <h3>数据模型关系</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">核心数据实体</div>
+  <div class="mockup-body">
+    <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="background:#1a1a2e;">
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#e94560;">实体</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#e94560;">核心字段</th>
+          <th style="padding:10px; border:1px solid #333; text-align:left; color:#e94560;">说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold;">LoanPlatform</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">name, icon, description</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">贷款平台 (银行/借呗/抖音等)</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold;">Loan</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">amount, rate, rate_type, start_date, end_date, repay_method</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">借款记录（核心）</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold;">RepaymentPlan</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">due_date, principal, interest, status</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">还款计划（系统自动生成）</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold;">PosSwipe</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">amount, fee_rate, fee, swipe_date, bank_card</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">POS刷卡记录</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold;">CreditCard</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">bank, card_number, bill_date, due_date, limit</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">信用卡管理</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold;">Wealth</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">type, amount, rate, start_date, end_date</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">定期存款/理财</td>
+        </tr>
+        <tr>
+          <td style="padding:10px; border:1px solid #333; font-weight:bold;">FeeConfig</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">fee_type, rate, description</td>
+          <td style="padding:10px; border:1px solid #333; color:#aaa;">费率配置（POS等）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <h3>前端视觉风格方向</h3>
+  <p class="subtitle">选择你喜欢的金融主题风格</p>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>暗黑金融风</h3>
+      <p>深色背景 + 渐变霓虹色图表 + 玻璃拟态卡片，类似 Bloomberg 终端/Coinbase 风格</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>专业浅色风</h3>
+      <p>白色背景 + 蓝色金融主题 + 简洁专业，类似银行 App/支付宝理财页风格</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>暗色 + 数据可视化</h3>
+      <p>暗色主题 + ECharts 图表 + 大屏数据看板感，强调图表和数字的可视化呈现</p>
+    </div>
+  </div>
+</div>

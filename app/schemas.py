@@ -259,6 +259,11 @@ class PersonRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PersonUpdate(BaseModel):
+    name: Optional[str] = None
+    relation: Optional[str] = None
+
+
 class LoanPlatformCreate(BaseModel):
     name: str
     icon: str = ""
@@ -273,6 +278,12 @@ class LoanPlatformRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class LoanPlatformUpdate(BaseModel):
+    name: Optional[str] = None
+    icon: Optional[str] = None
+    description: Optional[str] = None
+
+
 class LoanCreate(BaseModel):
     person_id: int
     platform_id: int
@@ -282,7 +293,7 @@ class LoanCreate(BaseModel):
     total_interest: Optional[float] = None
     repay_method: str
     start_date: date
-    end_date: date
+    end_date: Optional[date] = None
     periods: int
     note: str = ""
 
@@ -300,6 +311,13 @@ class LoanCreate(BaseModel):
             raise ValueError("repay_method must be equal_installment, interest_first, or bullet")
         return v
 
+    @field_validator("amount")
+    @classmethod
+    def amount_positive(cls, v):
+        if v <= 0:
+            raise ValueError("借款金额必须大于 0")
+        return v
+
 
 class LoanRead(BaseModel):
     id: int
@@ -313,12 +331,28 @@ class LoanRead(BaseModel):
     start_date: date
     end_date: date
     periods: int
+    paid_periods: int = 0
+    remaining_periods: int = 0
     status: str
     note: str
     created_at: datetime
     person: Optional[PersonRead] = None
     platform: Optional[LoanPlatformRead] = None
     model_config = {"from_attributes": True}
+
+
+class LoanUpdate(BaseModel):
+    person_id: Optional[int] = None
+    platform_id: Optional[int] = None
+    amount: Optional[float] = None
+    rate: Optional[float] = None
+    rate_type: Optional[str] = None
+    repay_method: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    periods: Optional[int] = None
+    status: Optional[str] = None
+    note: Optional[str] = None
 
 
 class RepaymentPlanRead(BaseModel):
@@ -338,6 +372,7 @@ class RepaymentPlanRead(BaseModel):
 
 class PosSwipeCreate(BaseModel):
     person_id: int
+    card_id: Optional[int] = None
     amount: float
     fee_rate: Optional[float] = None
     bank_card: str = ""
@@ -345,10 +380,18 @@ class PosSwipeCreate(BaseModel):
     swipe_date: datetime
     note: str = ""
 
+    @field_validator("amount")
+    @classmethod
+    def amount_positive(cls, v):
+        if v <= 0:
+            raise ValueError("金额必须大于 0")
+        return v
+
 
 class PosSwipeRead(BaseModel):
     id: int
     person_id: int
+    card_id: Optional[int] = None
     amount: float
     fee_rate: float
     fee: float
@@ -361,12 +404,23 @@ class PosSwipeRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PosSwipeUpdate(BaseModel):
+    card_id: Optional[int] = None
+    amount: Optional[float] = None
+    fee_rate: Optional[float] = None
+    bank_card: Optional[str] = None
+    pos_machine: Optional[str] = None
+    swipe_date: Optional[datetime] = None
+    note: Optional[str] = None
+
+
 class CreditCardCreate(BaseModel):
     person_id: int
     bank: str
     card_number_last4: str
     credit_limit: float
     current_balance: float = 0
+    interest_rate: float = 0.1825  # 年化透支利率，默认万分之五
     bill_day: int
     due_day: int
 
@@ -384,6 +438,13 @@ class CreditCardCreate(BaseModel):
             raise ValueError("due_day must be 1-28")
         return v
 
+    @field_validator("credit_limit")
+    @classmethod
+    def credit_limit_positive(cls, v):
+        if v <= 0:
+            raise ValueError("信用额度必须大于 0")
+        return v
+
 
 class CreditCardRead(BaseModel):
     id: int
@@ -392,6 +453,7 @@ class CreditCardRead(BaseModel):
     card_number_last4: str
     credit_limit: float
     current_balance: float
+    interest_rate: float
     bill_day: int
     due_day: int
     status: str
@@ -403,6 +465,7 @@ class CreditCardRead(BaseModel):
 class CreditCardUpdate(BaseModel):
     credit_limit: Optional[float] = None
     current_balance: Optional[float] = None
+    interest_rate: Optional[float] = None
     bill_day: Optional[int] = None
     due_day: Optional[int] = None
     status: Optional[str] = None
@@ -412,6 +475,7 @@ class CreditCardTransactionCreate(BaseModel):
     card_id: int
     person_id: int
     amount: float
+    trans_type: str = "消费"  # 消费 / 还款
     description: str = ""
     trans_date: datetime
 
@@ -421,11 +485,21 @@ class CreditCardTransactionRead(BaseModel):
     card_id: int
     person_id: int
     amount: float
+    trans_type: str
     description: str
     trans_date: datetime
     created_at: datetime
     person: Optional[PersonRead] = None
+    card: Optional[CreditCardRead] = None
     model_config = {"from_attributes": True}
+
+
+class CreditCardTransactionUpdate(BaseModel):
+    card_id: Optional[int] = None
+    amount: Optional[float] = None
+    trans_type: Optional[str] = None
+    description: Optional[str] = None
+    trans_date: Optional[datetime] = None
 
 
 class CardInstallmentCreate(BaseModel):
@@ -433,9 +507,17 @@ class CardInstallmentCreate(BaseModel):
     person_id: int
     amount: float
     periods: int
-    period_rate: float
+    rate_type: str = "period_rate"  # period_rate / annual_rate / total_fee
+    rate_value: float = 0.0  # the rate value according to rate_type
     start_date: date
     note: str = ""
+
+    @field_validator("rate_type")
+    @classmethod
+    def validate_rate_type(cls, v):
+        if v not in ("period_rate", "annual_rate", "total_fee"):
+            raise ValueError("rate_type must be period_rate, annual_rate, or total_fee")
+        return v
 
 
 class CardInstallmentRead(BaseModel):
@@ -451,11 +533,21 @@ class CardInstallmentRead(BaseModel):
     period_fee: float
     period_total: float
     paid_periods: int
+    remaining_periods: int = 0
     start_date: date
     note: str
     created_at: datetime
     person: Optional[PersonRead] = None
+    card: Optional[CreditCardRead] = None
     model_config = {"from_attributes": True}
+
+
+class CardInstallmentUpdate(BaseModel):
+    amount: Optional[float] = None
+    periods: Optional[int] = None
+    paid_periods: Optional[int] = None
+    start_date: Optional[date] = None
+    note: Optional[str] = None
 
 
 class MortgageCreate(BaseModel):
@@ -466,10 +558,17 @@ class MortgageCreate(BaseModel):
     remaining_principal: float
     rate: float
     start_date: date
-    end_date: date
+    end_date: Optional[date] = None
     total_periods: int
     monthly_payment: float
     repay_method: str = "equal_installment"
+
+    @field_validator("total_amount")
+    @classmethod
+    def total_amount_positive(cls, v):
+        if v <= 0:
+            raise ValueError("贷款总额必须大于 0")
+        return v
 
 
 class MortgageRead(BaseModel):
@@ -491,6 +590,21 @@ class MortgageRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class MortgageUpdate(BaseModel):
+    person_id: Optional[int] = None
+    bank: Optional[str] = None
+    house_name: Optional[str] = None
+    total_amount: Optional[float] = None
+    remaining_principal: Optional[float] = None
+    rate: Optional[float] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    total_periods: Optional[int] = None
+    monthly_payment: Optional[float] = None
+    repay_method: Optional[str] = None
+    status: Optional[str] = None
+
+
 class IncomeCreate(BaseModel):
     person_id: int
     amount: float
@@ -498,6 +612,13 @@ class IncomeCreate(BaseModel):
     period_type: str
     period_value: str
     note: str = ""
+
+    @field_validator("amount")
+    @classmethod
+    def amount_positive(cls, v):
+        if v <= 0:
+            raise ValueError("金额必须大于 0")
+        return v
 
 
 class IncomeRead(BaseModel):
@@ -513,6 +634,14 @@ class IncomeRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class IncomeUpdate(BaseModel):
+    amount: Optional[float] = None
+    source: Optional[str] = None
+    period_type: Optional[str] = None
+    period_value: Optional[str] = None
+    note: Optional[str] = None
+
+
 class ExpenseCreate(BaseModel):
     person_id: int
     amount: float
@@ -520,6 +649,13 @@ class ExpenseCreate(BaseModel):
     period_value: str
     expense_date: date
     note: str = ""
+
+    @field_validator("amount")
+    @classmethod
+    def amount_positive(cls, v):
+        if v <= 0:
+            raise ValueError("金额必须大于 0")
+        return v
 
 
 class ExpenseRead(BaseModel):
@@ -533,6 +669,14 @@ class ExpenseRead(BaseModel):
     created_at: datetime
     person: Optional[PersonRead] = None
     model_config = {"from_attributes": True}
+
+
+class ExpenseUpdate(BaseModel):
+    amount: Optional[float] = None
+    category: Optional[str] = None
+    period_value: Optional[str] = None
+    expense_date: Optional[date] = None
+    note: Optional[str] = None
 
 
 class FeeConfigCreate(BaseModel):
@@ -575,6 +719,7 @@ class TransactionQuery(BaseModel):
 
 class DashboardSummary(BaseModel):
     total_debt: float
+    total_debt_ex_mortgage: float
     total_assets: float
     monthly_interest: float
     monthly_pos_fee: float

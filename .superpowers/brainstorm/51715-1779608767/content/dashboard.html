@@ -1,0 +1,157 @@
+<h2>仪表盘设计 — 暗黑金融 + 数据可视化</h2>
+<p class="subtitle">A+C 风格融合：深色背景 + 霓虹色系 + 玻璃拟态卡片 + 大数据看板</p>
+
+<style>
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .stat-card {
+    background: linear-gradient(135deg, rgba(233,69,96,0.1), rgba(15,52,96,0.2));
+    border: 1px solid rgba(233,69,96,0.3);
+    border-radius: 12px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 6px;
+  }
+  .stat-value.red { color: #e94560; }
+  .stat-value.green { color: #00d2a0; }
+  .stat-value.blue { color: #4facfe; }
+  .stat-value.yellow { color: #f9ca24; }
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .chart-box {
+    background: rgba(26,26,46,0.8);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 16px;
+    backdrop-filter: blur(10px);
+  }
+  .chart-title {
+    font-size: 13px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding-bottom: 8px;
+  }
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding: 0 8px; }
+  .bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    position: relative;
+    min-width: 20px;
+  }
+  .bar.red { background: linear-gradient(to top, #e94560, #e9456080); }
+  .bar.green { background: linear-gradient(to top, #00d2a0, #00d2a080); }
+  .bar.blue { background: linear-gradient(to top, #4facfe, #4facfe80); }
+  .bar.yellow { background: linear-gradient(to top, #f9ca24, #f9ca2480); }
+  .bar-label { text-align: center; font-size: 10px; color: #666; margin-top: 4px; }
+  .repay-list { font-size: 12px; }
+  .repay-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+  .badge.warn { background: rgba(249,202,36,0.2); color: #f9ca24; }
+  .badge.danger { background: rgba(233,69,96,0.2); color: #e94560; }
+</style>
+
+<div class="section">
+  <div class="dashboard-grid">
+    <div class="stat-card">
+      <div class="stat-label">总负债</div>
+      <div class="stat-value red">¥128,500</div>
+      <div style="font-size:11px; color:#e94560; margin-top:4px;">↑ 3.2% vs 上月</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">总资产（理财+存款）</div>
+      <div class="stat-value green">¥86,000</div>
+      <div style="font-size:11px; color:#00d2a0; margin-top:4px;">↑ 1.5% vs 上月</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">本月应付利息</div>
+      <div class="stat-value yellow">¥1,840</div>
+      <div style="font-size:11px; color:#f9ca24; margin-top:4px;">3笔借款本月到期</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">本月POS手续费</div>
+      <div class="stat-value blue">¥360</div>
+      <div style="font-size:11px; color:#4facfe; margin-top:4px;">共刷卡 6万元</div>
+    </div>
+  </div>
+</div>
+
+<div class="chart-row">
+  <div class="chart-box">
+    <div class="chart-title">月度利息趋势 (近6月)</div>
+    <div class="bar-chart">
+      <div><div class="bar red" style="height: 60px;"></div><div class="bar-label">12月</div></div>
+      <div><div class="bar red" style="height: 75px;"></div><div class="bar-label">1月</div></div>
+      <div><div class="bar red" style="height: 70px;"></div><div class="bar-label">2月</div></div>
+      <div><div class="bar red" style="height: 90px;"></div><div class="bar-label">3月</div></div>
+      <div><div class="bar red" style="height: 85px;"></div><div class="bar-label">4月</div></div>
+      <div><div class="bar red" style="height: 100px;"></div><div class="bar-label">5月</div></div>
+    </div>
+  </div>
+  <div class="chart-box">
+    <div class="chart-title">各平台负债占比</div>
+    <div style="display:flex; flex-direction:column; gap:10px; padding-top:12px;">
+      <div><div style="display:flex; justify-content:space-between; font-size:12px;"><span>借呗</span><span style="color:#e94560;">¥45,000 (35%)</span></div>
+        <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; margin-top:4px;"><div style="width:35%; height:6px; background:#e94560; border-radius:3px;"></div></div>
+      </div>
+      <div><div style="display:flex; justify-content:space-between; font-size:12px;"><span>招商银行</span><span style="color:#4facfe;">¥38,500 (30%)</span></div>
+        <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; margin-top:4px;"><div style="width:30%; height:6px; background:#4facfe; border-radius:3px;"></div></div>
+      </div>
+      <div><div style="display:flex; justify-content:space-between; font-size:12px;"><span>抖音月付</span><span style="color:#f9ca24;">¥25,000 (19%)</span></div>
+        <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; margin-top:4px;"><div style="width:19%; height:6px; background:#f9ca24; border-radius:3px;"></div></div>
+      </div>
+      <div><div style="display:flex; justify-content:space-between; font-size:12px;"><span>微粒贷</span><span style="color:#00d2a0;">¥20,000 (16%)</span></div>
+        <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; margin-top:4px;"><div style="width:16%; height:6px; background:#00d2a0; border-radius:3px;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>导航结构</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">侧边栏导航</div>
+  <div class="mockup-body">
+    <div style="display:flex; height:300px;">
+      <div style="width:200px; background:#0d0d1a; padding:20px 0; border-right:1px solid rgba(255,255,255,0.06);">
+        <div style="padding:0 20px 24px; font-weight:bold; font-size:18px; color:#e94560;">FinManager</div>
+        <div style="padding:10px 20px; background:rgba(233,69,96,0.1); border-left:3px solid #e94560; color:white; font-size:13px;">📊 仪表盘</div>
+        <div style="padding:10px 20px; color:#666; font-size:13px;">💰 借贷管理</div>
+        <div style="padding:10px 20px; color:#666; font-size:13px;">💳 POS刷卡</div>
+        <div style="padding:10px 20px; color:#666; font-size:13px;">🏦 信用卡</div>
+        <div style="padding:10px 20px; color:#666; font-size:13px;">📈 理财收益</div>
+        <div style="padding:10px 20px; color:#666; font-size:13px;">📋 统计报告</div>
+        <div style="padding:10px 20px; color:#666; font-size:13px;">⚙️ 费率配置</div>
+      </div>
+      <div style="flex:1; padding:20px; background:#13132b;">
+        <div class="placeholder" style="display:flex; align-items:center; justify-content:center; height:100%;">内容区域</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>这个仪表盘布局和风格可以吗？需要调整的地方？</h3>
+</div>

@@ -1,0 +1,96 @@
+<h2>数据模型设计（7 张表）</h2>
+<p class="subtitle">覆盖 CMS 核心业务，关系清晰，便于练习关联查询测试</p>
+
+<div class="mockup">
+  <div class="mockup-header">核心模型关系图</div>
+  <div class="mockup-body">
+    <pre style="font-size:0.9rem;line-height:2;color:rgba(226,232,240,0.9)">
+User ──1:N──▶ Article ──N:1──▶ Category
+  │              │
+  │              └──N:N──▶ Tag (article_tags 关联表)
+  │
+  ├──1:N──▶ Media (上传的图片/文件)
+  │
+  └──N:N──▶ Role (user_roles 关联表)
+               │
+               └──N:N──▶ Permission (role_permissions)
+    </pre>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+
+<div class="mockup">
+  <div class="mockup-header">User（用户）</div>
+  <div class="mockup-body">
+    <pre style="font-size:0.8rem;line-height:1.8;color:rgba(226,232,240,0.85)">
+id, username, email
+full_name, avatar_url
+hashed_password
+is_active, is_superuser
+created_at
+    </pre>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">Article（文章）</div>
+  <div class="mockup-body">
+    <pre style="font-size:0.8rem;line-height:1.8;color:rgba(226,232,240,0.85)">
+id, title, slug
+content (正文富文本)
+excerpt (摘要)
+status: draft|pending|published|archived
+category_id, author_id
+published_at, created_at, updated_at
+    </pre>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">Category（分类）+ Tag（标签）</div>
+  <div class="mockup-body">
+    <pre style="font-size:0.8rem;line-height:1.8;color:rgba(226,232,240,0.85)">
+Category: id, name, slug, description
+Tag: id, name, slug
+article_tags: article_id, tag_id
+    </pre>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">Media（媒体资源）</div>
+  <div class="mockup-body">
+    <pre style="font-size:0.8rem;line-height:1.8;color:rgba(226,232,240,0.85)">
+id, filename, original_name
+file_path, file_size, mime_type
+uploader_id, created_at
+    </pre>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">Role（角色）+ Permission（权限）</div>
+  <div class="mockup-body">
+    <pre style="font-size:0.8rem;line-height:1.8;color:rgba(226,232,240,0.85)">
+Role: id, name, description
+Permission: id, name, code
+user_roles, role_permissions（多对多）
+    </pre>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">文章状态流转</div>
+  <div class="mockup-body" style="text-align:center;font-size:0.9rem;line-height:2;color:rgba(226,232,240,0.85)">
+draft ──提交审核──▶ pending ──审核通过──▶ published
+  ▲                    │                    │
+  │                    └──退回────▶ draft    │
+  │                                         │
+  └──────────── 归档 ◀───────────────────────┘
+                                          ↓
+                                      archived
+  </div>
+</div>
+
+</div>

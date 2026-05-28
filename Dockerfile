@@ -19,4 +19,4 @@ EXPOSE 8000
 
 # 定义容器启动时执行的命令
 # 请确保 'main:app' 与您项目中启动 FastAPI 的命令一致
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

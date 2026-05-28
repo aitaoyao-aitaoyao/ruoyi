@@ -1,8 +1,11 @@
 from datetime import date, datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.db import get_db
+from app.auth import get_current_user
+from app.models import User
 from app import crud, schemas
 from app.models import Loan, RepaymentPlan, PosSwipe, CreditCard, CardInstallment, Mortgage, Income, Expense
 from app.finance.snapshot_service import compute_snapshot
@@ -11,30 +14,59 @@ router = APIRouter(prefix="/finance", tags=["finance-dashboard"])
 
 
 @router.get("/dashboard", response_model=schemas.DashboardSummary)
-def get_dashboard(db: Session = Depends(get_db)):
+def get_dashboard(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     today = date.today()
+    # 删除旧的今日快照，重新计算以反映最新数据
     snap = crud.get_today_snapshot(db, today)
-    if not snap:
-        data = compute_snapshot(db, today)
-        snap = crud.create_snapshot(db, data)
+    if snap:
+        db.delete(snap)
+        db.commit()
+    data = compute_snapshot(db, today)
+    snap = crud.create_snapshot(db, data)
 
     total_income = db.query(func.coalesce(func.sum(Income.amount), 0)).scalar() or 0
 
     month_start = today.replace(day=1)
-    monthly_interest = db.query(func.coalesce(func.sum(RepaymentPlan.interest), 0)).filter(
+
+    # 1. 贷款利息（当前窗口内待还还款计划）
+    loan_interest = db.query(func.coalesce(func.sum(RepaymentPlan.interest), 0)).filter(
         RepaymentPlan.status == "pending",
         RepaymentPlan.due_date >= month_start,
         RepaymentPlan.due_date <= today.replace(day=28) + timedelta(days=7),
     ).scalar() or 0
 
+    # 2. 信用卡循环利息（按每张卡的实际利率计算）
+    cards = db.query(CreditCard).filter(CreditCard.status == "active", CreditCard.current_balance > 0).all()
+    card_interest = sum(c.current_balance * (c.interest_rate or 0.1825) / 12 for c in cards)
+
+    # 3. 分期手续费（当月到期期数的手续费）
+    installments = db.query(CardInstallment).all()
+    inst_fee = 0.0
+    for inst in installments:
+        if inst.paid_periods <= 0 or inst.total_fee <= 0:
+            continue
+        fee_per_period = inst.total_fee / inst.periods
+        for n in range(1, inst.paid_periods + 1):
+            pd = inst.start_date + relativedelta(months=n - 1)
+            if pd.year == today.year and pd.month == today.month:
+                inst_fee += fee_per_period
+
+    # 4. 房贷月利息
+    mortgages = db.query(Mortgage).filter(Mortgage.status == "active").all()
+    mtg_interest = sum(m.remaining_principal * m.rate / 12 for m in mortgages)
+
+    monthly_interest = round(loan_interest + card_interest + inst_fee + mtg_interest, 2)
+
     month_pos_fee = db.query(func.coalesce(func.sum(PosSwipe.fee), 0)).filter(
         func.strftime("%Y-%m", PosSwipe.swipe_date) == today.strftime("%Y-%m")
     ).scalar() or 0
 
+    ex_mortgage = snap.total_debt - snap.mortgage_debt
     return {
         "total_debt": snap.total_debt,
+        "total_debt_ex_mortgage": round(ex_mortgage, 2),
         "total_assets": round(total_income, 2),
-        "monthly_interest": round(monthly_interest, 2),
+        "monthly_interest": monthly_interest,
         "monthly_pos_fee": round(month_pos_fee, 2),
         "total_loan_debt": snap.loan_debt,
         "total_card_debt": snap.card_debt,
@@ -44,7 +76,7 @@ def get_dashboard(db: Session = Depends(get_db)):
 
 
 @router.get("/repay-reminders", response_model=list[schemas.RepayReminderItem])
-def get_repay_reminders(db: Session = Depends(get_db)):
+def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     today = date.today()
     cutoff = today + timedelta(days=7)
     reminders = []
@@ -55,9 +87,11 @@ def get_repay_reminders(db: Session = Depends(get_db)):
         RepaymentPlan.due_date <= cutoff,
     ).all()
     for rp in rps:
+        platform_name = rp.loan.platform.name if rp.loan and rp.loan.platform else ""
+        loan_label = f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}"
         reminders.append(schemas.RepayReminderItem(
             type="loan",
-            name=f"贷款 #{rp.loan_id}",
+            name=loan_label,
             person_name=rp.person.name if rp.person else "",
             card_last4="",
             due_date=rp.due_date,
@@ -65,20 +99,23 @@ def get_repay_reminders(db: Session = Depends(get_db)):
             days_left=(rp.due_date - today).days,
         ))
 
+    # 信用卡 + 分期合并提醒（按卡汇总）
     cards = db.query(CreditCard).filter(CreditCard.status == "active").all()
+    # 先按 card_id 收集基础信息
+    card_map = {}  # card_id -> { bank, person_name, card_last4, due_date, amount, days_left }
     for card in cards:
         due_this_month = date(today.year, today.month, min(card.due_day, 28))
-        if today <= due_this_month <= cutoff and card.current_balance > 0:
-            reminders.append(schemas.RepayReminderItem(
-                type="card",
-                name=card.bank,
-                person_name=card.person.name if card.person else "",
-                card_last4=card.card_number_last4,
-                due_date=due_this_month,
-                amount=card.current_balance,
-                days_left=(due_this_month - today).days,
-            ))
+        if today <= due_this_month <= cutoff:
+            card_map[card.id] = {
+                "bank": card.bank,
+                "person_name": card.person.name if card.person else "",
+                "card_last4": card.card_number_last4,
+                "due_date": due_this_month,
+                "amount": card.current_balance,
+                "days_left": (due_this_month - today).days,
+            }
 
+    # 把分期每期金额合并到对应卡上
     installments = db.query(CardInstallment).filter(
         CardInstallment.paid_periods < CardInstallment.periods,
     ).all()
@@ -86,15 +123,132 @@ def get_repay_reminders(db: Session = Depends(get_db)):
         due_day = inst.card.due_day if inst.card else 1
         due_date_inst = date(today.year, today.month, min(due_day, 28))
         if today <= due_date_inst <= cutoff:
+            if inst.card_id in card_map:
+                card_map[inst.card_id]["amount"] += inst.period_total
+            else:
+                # 该卡当前余额为 0 但有分期，也加入提醒
+                bank_name = inst.card.bank if inst.card else ""
+                card_tail = inst.card.card_number_last4 if inst.card else ""
+                card_map[inst.card_id] = {
+                    "bank": bank_name,
+                    "person_name": inst.person.name if inst.person else "",
+                    "card_last4": card_tail,
+                    "due_date": due_date_inst,
+                    "amount": inst.period_total,
+                    "days_left": (due_date_inst - today).days,
+                }
+
+    for cid, cdata in card_map.items():
+        if cdata["amount"] > 0:
+            bank = cdata["bank"]
+            tail = cdata["card_last4"]
+            if bank and tail:
+                display_name = f"{bank} 尾号{tail}"
+            elif bank:
+                display_name = bank
+            elif tail:
+                display_name = f"信用卡 尾号{tail}"
+            else:
+                display_name = f"信用卡 #{cid}"
             reminders.append(schemas.RepayReminderItem(
-                type="installment",
-                name=f"{inst.card.bank if inst.card else ''} 分期",
-                person_name=inst.person.name if inst.person else "",
-                card_last4=inst.card.card_number_last4 if inst.card else "",
-                due_date=due_date_inst,
-                amount=inst.period_total,
-                days_left=(due_date_inst - today).days,
+                type="card",
+                name=display_name,
+                person_name=cdata["person_name"],
+                card_last4=cdata["card_last4"],
+                due_date=cdata["due_date"],
+                amount=round(cdata["amount"], 2),
+                days_left=cdata["days_left"],
             ))
 
     reminders.sort(key=lambda r: r.days_left)
     return reminders
+
+
+@router.get("/monthly-interest-detail")
+def monthly_interest_detail(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """本月应付利息明细：贷款利息、信用卡利息、分期手续费、房贷利息"""
+    today = date.today()
+    month_start = today.replace(day=1)
+    month_end = today.replace(day=28) + timedelta(days=7)
+
+    items = []
+
+    # 1. 贷款利息（当前窗口内待还的还款计划）
+    loan_plans = db.query(RepaymentPlan).filter(
+        RepaymentPlan.status == "pending",
+        RepaymentPlan.due_date >= month_start,
+        RepaymentPlan.due_date <= month_end,
+    ).all()
+    for rp in loan_plans:
+        loan = rp.loan
+        platform_name = loan.platform.name if loan and loan.platform else ""
+        loan_label = f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}"
+        items.append({
+            "type": "贷款利息",
+            "name": loan_label,
+            "person_name": rp.person.name if rp.person else "",
+            "due_date": str(rp.due_date),
+            "amount": round(rp.interest, 2),
+            "note": f"第{rp.period_no}/{loan.periods if loan else '?'}期",
+        })
+
+    # 2. 信用卡利息（按每张卡的实际利率计算）
+    cards = db.query(CreditCard).filter(
+        CreditCard.status == "active",
+        CreditCard.current_balance > 0,
+    ).all()
+    for c in cards:
+        rate = c.interest_rate or 0.1825
+        monthly_interest = c.current_balance * rate / 12
+        if monthly_interest >= 0.01:
+            items.append({
+                "type": "信用卡利息",
+                "name": f"{c.bank} 尾号{c.card_number_last4}",
+                "person_name": c.person.name if c.person else "",
+                "due_date": f"{today.year}-{today.month:02d}-{min(c.due_day, 28):02d}",
+                "amount": round(monthly_interest, 2),
+                "note": f"按{round(rate*100, 2)}%年化估算",
+            })
+
+    # 3. 分期手续费（当月到期的期数对应的手续费）
+    installments = db.query(CardInstallment).all()
+    for inst in installments:
+        if inst.paid_periods <= 0 or inst.total_fee <= 0:
+            continue
+        fee_per_period = inst.total_fee / inst.periods
+        count_this_month = 0
+        for n in range(1, inst.paid_periods + 1):
+            pd = inst.start_date + relativedelta(months=n - 1)
+            if pd.year == today.year and pd.month == today.month:
+                count_this_month += 1
+        if count_this_month > 0:
+            card_info = f"{inst.card.bank} 尾号{inst.card.card_number_last4}" if inst.card else ""
+            items.append({
+                "type": "分期手续费",
+                "name": card_info or f"分期 #{inst.id}",
+                "person_name": inst.person.name if inst.person else "",
+                "due_date": f"{today.year}-{today.month:02d}",
+                "amount": round(fee_per_period * count_this_month, 2),
+                "note": f"总额¥{int(inst.amount):,} {inst.periods}期 · 每期手续费¥{round(fee_per_period, 2)}",
+            })
+
+    # 4. 房贷月利息
+    mortgages = db.query(Mortgage).filter(Mortgage.status == "active").all()
+    for m in mortgages:
+        monthly_int = m.remaining_principal * m.rate / 12
+        items.append({
+            "type": "房贷利息",
+            "name": f"{m.bank} {m.house_name}",
+            "person_name": m.person.name if m.person else "",
+            "due_date": f"{today.year}-{today.month:02d}",
+            "amount": round(monthly_int, 2),
+            "note": f"剩余本金¥{int(m.remaining_principal):,}",
+        })
+
+    total = sum(it["amount"] for it in items)
+
+    return {
+        "period": f"{today.year}-{today.month:02d}",
+        "total": round(total, 2),
+        "items": items,
+    }

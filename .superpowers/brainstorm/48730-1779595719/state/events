@@ -1,0 +1,1 @@
+{"type":"click","text":"A\n    \n      Vue 3 + Tailwind CSS（CDN 引入，无需构建）推荐\n      优点：响应式 SPA，组件化开发，Tailwind 做出来的 UI 天然\"高大上\"。Selenium 可以练习复杂的 UI 交互（弹窗、表单校验、动态列表）。零构建工具，直接 CDN 引入。\n      Selenium 场景：路由跳转、表单提交、弹窗交互、列表筛选、文件上传、Toast 消息验证。","choice":"vue","id":null,"timestamp":1779596579547}

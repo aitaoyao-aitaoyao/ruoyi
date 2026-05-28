@@ -10,15 +10,46 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 
-from app.db import engine, Base
+from app.db import engine, Base, SessionLocal
+from app.models import User
+from app.auth import hash_password
 from app.api.v1 import auth, articles, categories, tags, media, users, dashboard
 from app.api.v1.finance import persons, platforms, loans, pos_swipes
 from app.api.v1.finance import credit_cards, card_transactions, card_installments
 from app.api.v1.finance import mortgages, incomes, expenses, fee_configs
-from app.api.v1.finance import dashboard as fin_dashboard, calc, transactions, reports
+from app.api.v1.finance import dashboard as fin_dashboard, calc, transactions, reports, recycle_bin
 
 # 自动创建所有数据库表（如果表已存在则跳过）
 Base.metadata.create_all(bind=engine)
+
+# 数据库迁移：为新字段添加列（SQLite 不支持 IF NOT EXISTS，使用 try/except）
+import sqlite3
+try:
+    _conn = sqlite3.connect("app.db")
+    _conn.execute("ALTER TABLE credit_card_transactions ADD COLUMN trans_type VARCHAR(10) DEFAULT '消费'")
+    _conn.commit()
+    _conn.close()
+except Exception:
+    pass  # 列已存在则忽略
+
+# 确保默认管理员用户存在（用于首次登录）
+def _ensure_admin_user():
+    db = SessionLocal()
+    try:
+        if not db.query(User).filter(User.username == "admin").first():
+            admin = User(
+                username="admin",
+                email="admin@lightpress.com",
+                full_name="系统管理员",
+                hashed_password=hash_password("admin123"),
+                is_superuser=True,
+            )
+            db.add(admin)
+            db.commit()
+    finally:
+        db.close()
+
+_ensure_admin_user()
 
 # 创建 FastAPI 应用实例，配置 Swagger 文档信息
 app = FastAPI(
@@ -59,6 +90,7 @@ app.include_router(fin_dashboard.router, prefix="/api/v1")
 app.include_router(calc.router, prefix="/api/v1")
 app.include_router(transactions.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
+app.include_router(recycle_bin.router, prefix="/api/v1")
 
 # 挂载静态文件目录（前端 Vue SPA）
 BASE_DIR = Path(__file__).resolve().parent
