@@ -1104,13 +1104,13 @@ const IncomesPage = {
             <td><input type="checkbox" :checked="selectedIds.includes(i.id)" @change="toggleSelect(i.id)"></td>
             <td>{{ i.id }}</td><td>{{ i.person?.name || '-' }}</td><td style="color:var(--green)">¥{{ fmt(i.amount) }}</td><td>{{ i.source }}</td>
             <td><span class="tag blue">{{ periodTypeLabel(i.period_type) }}</span></td><td>{{ i.period_value }}</td>
-            <td><button class="btn btn-danger btn-xs" @click="remove(i.id)">删除</button></td>
+            <td><button class="btn btn-secondary btn-xs" @click="openEdit(i)" style="margin-right:4px">编辑</button><button class="btn btn-danger btn-xs" @click="remove(i.id)">删除</button></td>
         </tr></tbody>
     </table>
     <div v-if="items.length === 0" class="empty-state">暂无收入记录</div>
 
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
-        <div class="modal"><h3>新增收入</h3>
+        <div class="modal"><h3>{{ editing ? '编辑' : '新增' }}收入</h3>
             <div class="form-group"><label>人员</label><select v-model="form.person_id"><option v-for="p in persons" :key="p.id" :value="p.id">{{ p.name }}</option></select></div>
             <div class="form-group"><label>金额</label><input v-model.number="form.amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
             <div class="form-group"><label>来源</label><input v-model="form.source" placeholder="工资/兼职/投资/租金/其他"></div>
@@ -1121,13 +1121,13 @@ const IncomesPage = {
             <div class="form-group"><label>备注</label><input v-model="form.note" placeholder="收入备注"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
                 <button class="btn btn-secondary" @click="showModal = false">取消</button>
-                <button class="btn btn-primary" @click="create">确认</button>
+                <button class="btn btn-primary" @click="submit">{{ editing ? '保存修改' : '确认' }}</button>
             </div>
         </div>
     </div>
 </div>`,
     data() {
-        return { items: [], persons: [], showModal: false, selectedIds: [], form: { person_id: 1, amount: 0, source: '', period_type: 'monthly', period_value: todayStr().slice(0, 7), note: '' } };
+        return { items: [], persons: [], showModal: false, editing: null, selectedIds: [], form: { person_id: 1, amount: 0, source: '', period_type: 'monthly', period_value: todayStr().slice(0, 7), note: '' } };
     },
     async mounted() { await this.load(); },
     methods: {
@@ -1138,10 +1138,15 @@ const IncomesPage = {
             if (this.persons.length) this.form.person_id = this.persons[0].id;
         },
         periodTypeLabel(t) { const m = { monthly: '月度', yearly: '年度', once: '一次性' }; return m[t] || t; },
-        openCreate() { this.form = { person_id: this.persons[0]?.id || 1, amount: 0, source: '', period_type: 'monthly', period_value: todayStr().slice(0, 7), note: '' }; this.showModal = true; },
-        async create() {
+        openCreate() { this.editing = null; this.form = { person_id: this.persons[0]?.id || 1, amount: 0, source: '', period_type: 'monthly', period_value: todayStr().slice(0, 7), note: '' }; this.showModal = true; },
+        openEdit(i) { this.editing = i; this.form = { person_id: i.person_id, amount: i.amount, source: i.source || '', period_type: i.period_type || 'monthly', period_value: i.period_value || todayStr().slice(0, 7), note: i.note || '' }; this.showModal = true; },
+        async submit() {
             if (!this.form.amount || !this.form.source) return this.showToast('请填写金额和来源', 'error');
-            try { await api('/incomes/', { method: 'POST', body: JSON.stringify(this.form) }); this.showToast('收入已记录'); this.showModal = false; await this.load(); } catch(e) { this.showToast(e.message, 'error'); }
+            if (this.editing) {
+                try { await api('/incomes/' + this.editing.id, { method: 'PATCH', body: JSON.stringify(this.form) }); this.showToast('收入已更新'); this.showModal = false; await this.load(); } catch(e) { this.showToast(e.message, 'error'); }
+            } else {
+                try { await api('/incomes/', { method: 'POST', body: JSON.stringify(this.form) }); this.showToast('收入已记录'); this.showModal = false; await this.load(); } catch(e) { this.showToast(e.message, 'error'); }
+            }
         },
         async remove(id) { if (!confirm('确定删除?')) return; try { await api('/incomes/' + id, { method: 'DELETE' }); this.showToast('已删除'); await this.load(); } catch(e) { this.showToast(e.message, 'error'); } }
     }

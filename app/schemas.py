@@ -635,6 +635,7 @@ class IncomeRead(BaseModel):
 
 
 class IncomeUpdate(BaseModel):
+    person_id: Optional[int] = None
     amount: Optional[float] = None
     source: Optional[str] = None
     period_type: Optional[str] = None

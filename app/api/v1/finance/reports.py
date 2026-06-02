@@ -40,10 +40,23 @@ def report_summary(db: Session = Depends(get_db), user: User = Depends(get_curre
 
 @router.get("/by-platform")
 def report_by_platform(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    results = db.query(
-        LoanPlatform.name, func.coalesce(func.sum(Loan.amount), 0)
-    ).join(Loan).filter(Loan.status == "active").group_by(LoanPlatform.name).all()
-    return [{"platform": r[0], "total_amount": r[1]} for r in results]
+    """各平台贷款剩余待还款金额（按平台汇总）。"""
+    from collections import defaultdict
+    platform_totals = defaultdict(float)
+
+    active_loans = db.query(Loan).filter(Loan.status == "active").all()
+    for loan in active_loans:
+        # 计算该贷款剩余待还款本金
+        pending = db.query(func.coalesce(func.sum(RepaymentPlan.principal), 0)).filter(
+            RepaymentPlan.loan_id == loan.id,
+            RepaymentPlan.status == "pending",
+        ).scalar() or 0
+        remaining = pending if pending > 0 else loan.amount
+
+        platform_name = loan.platform.name if loan.platform else "未知平台"
+        platform_totals[platform_name] += remaining
+
+    return [{"platform": k, "total_amount": round(v, 2)} for k, v in platform_totals.items()]
 
 
 @router.get("/by-month")
