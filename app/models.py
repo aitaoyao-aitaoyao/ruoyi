@@ -14,7 +14,7 @@ ORM 数据模型 — 定义所有数据库表结构
     Role N──M Permission (角色权限，通过 role_permissions 关联表)
     User 1──N Media (上传者)
 """
-from datetime import datetime
+from datetime import date, datetime
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Date, Float, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from app.db import Base
@@ -373,3 +373,13 @@ class DeletedRecord(Base):
     record_id = Column(Integer, nullable=False)
     record_data = Column(Text, nullable=False)
     deleted_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CashRecord(Base):
+    """手头现金记录：用户手动录入的现金余额，支持历史追踪。"""
+    __tablename__ = "cash_records"
+    id = Column(Integer, primary_key=True, index=True)
+    amount = Column(Float, nullable=False)
+    recorded_at = Column(Date, nullable=False, default=date.today, index=True)
+    note = Column(String(200), default="")
+    created_at = Column(DateTime, default=datetime.utcnow)

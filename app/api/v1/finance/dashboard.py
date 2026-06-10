@@ -35,27 +35,23 @@ def get_dashboard(db: Session = Depends(get_db), user: User = Depends(get_curren
         RepaymentPlan.due_date <= today.replace(day=28) + timedelta(days=7),
     ).scalar() or 0
 
-    # 2. 信用卡循环利息（按每张卡的实际利率计算）
-    cards = db.query(CreditCard).filter(CreditCard.status == "active", CreditCard.current_balance > 0).all()
-    card_interest = sum(c.current_balance * (c.interest_rate or 0.1825) / 12 for c in cards)
-
-    # 3. 分期手续费（当月到期期数的手续费）
+    # 2. 分期手续费（当月到期的期数，检查全部分期）
     installments = db.query(CardInstallment).all()
     inst_fee = 0.0
     for inst in installments:
-        if inst.paid_periods <= 0 or inst.total_fee <= 0:
+        if inst.total_fee <= 0:
             continue
         fee_per_period = inst.total_fee / inst.periods
-        for n in range(1, inst.paid_periods + 1):
+        for n in range(1, inst.periods + 1):
             pd = inst.start_date + relativedelta(months=n - 1)
             if pd.year == today.year and pd.month == today.month:
                 inst_fee += fee_per_period
 
-    # 4. 房贷月利息
+    # 3. 房贷月利息
     mortgages = db.query(Mortgage).filter(Mortgage.status == "active").all()
     mtg_interest = sum(m.remaining_principal * m.rate / 12 for m in mortgages)
 
-    monthly_interest = round(loan_interest + card_interest + inst_fee + mtg_interest, 2)
+    monthly_interest = round(loan_interest + inst_fee + mtg_interest, 2)
 
     month_pos_fee = db.query(func.coalesce(func.sum(PosSwipe.fee), 0)).filter(
         func.strftime("%Y-%m", PosSwipe.swipe_date) == today.strftime("%Y-%m")
@@ -166,7 +162,7 @@ def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_
 
 @router.get("/monthly-interest-detail")
 def monthly_interest_detail(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """本月应付利息明细：贷款利息、信用卡利息、分期手续费、房贷利息"""
+    """本月应付利息明细：贷款利息、分期手续费、房贷利息"""
     today = date.today()
     month_start = today.replace(day=1)
     month_end = today.replace(day=28) + timedelta(days=7)
@@ -192,32 +188,14 @@ def monthly_interest_detail(db: Session = Depends(get_db), user: User = Depends(
             "note": f"第{rp.period_no}/{loan.periods if loan else '?'}期",
         })
 
-    # 2. 信用卡利息（按每张卡的实际利率计算）
-    cards = db.query(CreditCard).filter(
-        CreditCard.status == "active",
-        CreditCard.current_balance > 0,
-    ).all()
-    for c in cards:
-        rate = c.interest_rate or 0.1825
-        monthly_interest = c.current_balance * rate / 12
-        if monthly_interest >= 0.01:
-            items.append({
-                "type": "信用卡利息",
-                "name": f"{c.bank} 尾号{c.card_number_last4}",
-                "person_name": c.person.name if c.person else "",
-                "due_date": f"{today.year}-{today.month:02d}-{min(c.due_day, 28):02d}",
-                "amount": round(monthly_interest, 2),
-                "note": f"按{round(rate*100, 2)}%年化估算",
-            })
-
-    # 3. 分期手续费（当月到期的期数对应的手续费）
+    # 2. 分期手续费（当月到期的期数对应的手续费，检查全部分期）
     installments = db.query(CardInstallment).all()
     for inst in installments:
-        if inst.paid_periods <= 0 or inst.total_fee <= 0:
+        if inst.total_fee <= 0:
             continue
         fee_per_period = inst.total_fee / inst.periods
         count_this_month = 0
-        for n in range(1, inst.paid_periods + 1):
+        for n in range(1, inst.periods + 1):
             pd = inst.start_date + relativedelta(months=n - 1)
             if pd.year == today.year and pd.month == today.month:
                 count_this_month += 1
@@ -232,7 +210,7 @@ def monthly_interest_detail(db: Session = Depends(get_db), user: User = Depends(
                 "note": f"总额¥{int(inst.amount):,} {inst.periods}期 · 每期手续费¥{round(fee_per_period, 2)}",
             })
 
-    # 4. 房贷月利息
+    # 3. 房贷月利息
     mortgages = db.query(Mortgage).filter(Mortgage.status == "active").all()
     for m in mortgages:
         monthly_int = m.remaining_principal * m.rate / 12

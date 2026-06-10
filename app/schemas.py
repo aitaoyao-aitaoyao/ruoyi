@@ -747,3 +747,25 @@ class GapAnalysis(BaseModel):
     debt_payment: float
     total_expense: float
     gap: float
+
+
+class CashRecordCreate(BaseModel):
+    amount: float
+    recorded_at: Optional[date] = None
+    note: str = ""
+
+    @field_validator("amount")
+    @classmethod
+    def amount_non_negative(cls, v):
+        if v < 0:
+            raise ValueError("金额不能为负数")
+        return v
+
+
+class CashRecordRead(BaseModel):
+    id: int
+    amount: float
+    recorded_at: date
+    note: str
+    created_at: datetime
+    model_config = {"from_attributes": True}

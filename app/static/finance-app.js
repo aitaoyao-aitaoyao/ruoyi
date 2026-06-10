@@ -219,13 +219,23 @@ const DashboardPage = {
     mixins: [ToastMixin, ChartMixin],
     template: `
 <div>
-    <div class="page-header"><h2>仪表盘</h2><p>个人财务概览</p></div>
+    <div class="page-header"><h2>仪表盘 <span v-if="v2.risk" class="v2-risk-badge" style="position:static;display:inline-block;margin-left:8px;vertical-align:middle;font-size:12px;padding:3px 12px" :style="{ background: v2.risk.overall.color + '22', color: v2.risk.overall.color, border: '1px solid ' + v2.risk.overall.color + '44' }">{{ v2.risk.overall.grade }} · {{ v2.risk.overall.label }}</span></h2><p>个人财务概览</p></div>
     <div class="stat-cards">
         <div class="stat-card"><div class="label">总负债（含房贷）</div><div class="value red">{{ fmt(dash.total_debt) }}</div></div>
         <div class="stat-card"><div class="label">总负债（不含房贷）</div><div class="value red">{{ fmt(dash.total_debt_ex_mortgage) }}</div></div>
         <div class="stat-card"><div class="label">总资产</div><div class="value green">{{ fmt(dash.total_assets) }}</div></div>
         <div class="stat-card" style="cursor:pointer" @click="showInterestDetail"><div class="label">本月应付利息</div><div class="value yellow">{{ fmt(dash.monthly_interest) }}</div></div>
         <div class="stat-card"><div class="label">本月 POS 手续费</div><div class="value blue">{{ fmt(dash.monthly_pos_fee) }}</div></div>
+    </div>
+    <div class="section-title">风险指标</div>
+    <div class="stat-cards" v-if="v2.metrics && Object.keys(v2.metrics).length">
+        <div class="stat-card v2-stat tooltip-card" v-for="(m, key) in v2.metrics" :key="key" :style="{ borderLeft: '3px solid ' + m.risk_color }">
+            <div class="label">{{ metricLabel(key) }}</div>
+            <div class="value" :style="{ color: m.risk_color, fontSize: '22px' }">{{ m.formatted }}</div>
+            <div style="font-size:10px;color:#888;margin-top:4px">{{ m.description }}</div>
+            <span class="v2-risk-badge" :style="{ background: m.risk_color + '22', color: m.risk_color, border: '1px solid ' + m.risk_color + '44' }">{{ m.risk_label }}</span>
+            <span class="tooltip-text">{{ metricTooltip(key) }}</span>
+        </div>
     </div>
     <div class="section-title">负债明细 <span style="font-size:10px;color:#666;font-weight:normal">（点击管理）</span></div>
     <div class="stat-cards">
@@ -295,18 +305,23 @@ const DashboardPage = {
             dash: {}, reminders: [], snapshots: [],
             showInterestModal: false,
             interestDetail: { total: 0, period: '', items: [] },
+            v2: { period: '', inputs: {}, metrics: {} },
         };
     },
     async mounted() {
         try { this.dash = await api('/dashboard'); } catch(e) { this.showToast(e.message, 'error'); }
         try { this.reminders = await api('/repay-reminders'); } catch(e) { this.showToast(e.message, 'error'); }
         try { this.snapshots = await api('/reports/snapshots?months=12'); } catch(e) {}
+        try { this.v2 = await api('/v2/dashboard'); } catch(e) {}
+        try { const riskData = await api('/v2/risk-assessment'); this.v2.risk = riskData; } catch(e) {}
         this.$nextTick(() => { this.renderPie(); this.renderTrend(); this.renderGap(); });
     },
     methods: {
         fmt, fmtDate, daysLeft,
         navigate(path) { router.push(path); },
         typeLabel(t) { const m = { loan: '贷款', card: '信用卡', installment: '分期' }; return m[t] || t; },
+        metricLabel(k) { const m = { debt_burn_rate: '债务燃烧率', survival_line: '生存线', debt_freedom_months: '债务自由预期', cash_flow_rupture: '现金流破裂预警', interest_consumption_rate: '利息消耗率' }; return m[k] || k; },
+        metricTooltip(k) { const m = { debt_burn_rate: '月利息 + 月手续费 − 月减少本金。正值=债务恶化，负值=债务下降', survival_line: '月收入 − 月支出 − 月利息。正值=止血有结余，负值=持续失血', debt_freedom_months: '总负债 ÷ 生存线。按当前结余速度预计还清全部债务的月数', cash_flow_rupture: '手头现金 ÷ |月缺口|。手头现金能支撑多少个月不被耗尽', interest_consumption_rate: '月利息 ÷ 月收入 × 100%。利息占收入比例，越高越危险' }; return m[k] || ''; },
         async showInterestDetail() {
             try {
                 this.interestDetail = await api('/monthly-interest-detail');
@@ -1311,11 +1326,11 @@ const ReportsPage = {
         <button class="btn btn-secondary btn-sm" @click="loadInterestStats">查询</button>
     </div>
     <div class="stat-cards" style="margin-bottom:16px;grid-template-columns:repeat(5,1fr)">
-        <div class="stat-card"><div class="label">总利息/手续费</div><div class="value yellow">{{ fmt(interestStats.total_interest) }}</div></div>
-        <div class="stat-card"><div class="label">贷款已付利息</div><div class="value red">{{ fmt(interestStats.loan_interest) }}</div></div>
-        <div class="stat-card"><div class="label">POS手续费</div><div class="value blue">{{ fmt(interestStats.pos_fee) }}</div></div>
-        <div class="stat-card"><div class="label">分期手续费</div><div class="value yellow">{{ fmt(interestStats.installment_fee) }}</div></div>
-        <div class="stat-card"><div class="label">房贷月利息（近似）</div><div class="value green">{{ fmt(interestStats.mortgage_interest || 0) }}</div></div>
+        <div class="stat-card" style="cursor:pointer" @click="showInterestDetail('总利息/手续费', 'total')"><div class="label">总利息/手续费</div><div class="value yellow">{{ fmt(interestStats.total_interest) }}</div></div>
+        <div class="stat-card" style="cursor:pointer" @click="showInterestDetail('贷款已付利息', 'loan_interest')"><div class="label">贷款已付利息</div><div class="value red">{{ fmt(interestStats.loan_interest) }}</div></div>
+        <div class="stat-card" style="cursor:pointer" @click="showInterestDetail('POS手续费', 'pos_fee')"><div class="label">POS手续费</div><div class="value blue">{{ fmt(interestStats.pos_fee) }}</div></div>
+        <div class="stat-card" style="cursor:pointer" @click="showInterestDetail('分期手续费', 'installment_fee')"><div class="label">分期手续费</div><div class="value yellow">{{ fmt(interestStats.installment_fee) }}</div></div>
+        <div class="stat-card" style="cursor:pointer" @click="showInterestDetail('房贷利息', 'mortgage_interest')"><div class="label">房贷月利息（近似）</div><div class="value green">{{ fmt(interestStats.mortgage_interest || 0) }}</div></div>
     </div>
     <div class="chart-row">
         <div class="chart-box"><div class="title">利息/手续费构成</div><div ref="interestPieChart" class="chart-inner"></div></div>
@@ -1409,7 +1424,11 @@ const ReportsPage = {
     </div>
 
     <!-- 优先还款方案 -->
-    <div class="section-title">优先还款方案（雪崩法）</div>
+    <div class="section-title" style="display:flex;align-items:center;gap:8px">
+        优先还款方案
+        <span class="filter-chip" :class="{ active: priorityMethod === 'avalanche' }" @click="switchPriorityMethod('avalanche')">雪崩法</span>
+        <span class="filter-chip" :class="{ active: priorityMethod === 'snowball' }" @click="switchPriorityMethod('snowball')">雪球法</span>
+    </div>
     <div v-if="priorityPlan.items && priorityPlan.items.length" style="margin-bottom:20px">
         <div style="font-size:12px;color:#888;margin-bottom:8px">{{ priorityPlan.method }} · 总债务 ¥{{ fmt(priorityPlan.total_debt) }} · 月利息约 ¥{{ fmt(priorityPlan.total_monthly_interest) }}</div>
         <table class="data-table"><thead><tr><th>优先级</th><th>类型</th><th>名称</th><th>人员</th><th>余额</th><th>年化利率</th><th>备注</th></tr></thead>
@@ -1422,8 +1441,22 @@ const ReportsPage = {
                 <td style="color:#888;font-size:11px">{{ item.note }}</td>
             </tr></tbody>
         </table>
-        <div style="background:rgba(233,69,96,0.06);border:1px solid rgba(233,69,96,0.15);border-radius:8px;padding:12px;margin-top:12px;font-size:12px;color:#ccc">
-            <strong style="color:var(--red)">建议</strong>：优先偿还 <strong style="color:var(--red)">{{ priorityPlan.items[0].name }}</strong>（年化 {{ priorityPlan.items[0].rate_label }}），还清后依次向下，能最大程度减少总利息支出。
+        <div v-if="priorityPlan.comparison" style="margin-top:12px">
+            <div style="font-size:12px;color:var(--blue);margin-bottom:6px">📊 两种方案对比（预估月还款 ¥{{ fmt(priorityPlan.total_monthly_interest + priorityPlan.total_debt * 0.02) }}）</div>
+            <table class="data-table"><thead><tr><th></th><th>雪崩法</th><th>雪球法</th></tr></thead>
+                <tbody><tr>
+                    <td>预计还清</td>
+                    <td :style="{ color: 'var(--yellow)' }">{{ priorityPlan.comparison.avalanche.months }} 个月</td>
+                    <td :style="{ color: 'var(--blue)' }">{{ priorityPlan.comparison.snowball.months }} 个月</td>
+                </tr><tr>
+                    <td>总利息</td>
+                    <td style="color:var(--green)">¥{{ fmt(priorityPlan.comparison.avalanche.total_interest) }}</td>
+                    <td>¥{{ fmt(priorityPlan.comparison.snowball.total_interest) }}</td>
+                </tr><tr>
+                    <td>特点</td><td style="font-size:11px;color:#888">{{ priorityPlan.comparison.avalanche.description }}</td>
+                    <td style="font-size:11px;color:#888">{{ priorityPlan.comparison.snowball.description }}</td>
+                </tr></tbody>
+            </table>
         </div>
     </div>
 
@@ -1450,6 +1483,34 @@ const ReportsPage = {
     <div class="chart-row" v-if="forecastData.forecasts && forecastData.forecasts.length">
         <div class="chart-box" style="grid-column:1 / -1"><div class="title">负债推演</div><div ref="forecastChart" class="chart-inner" style="height:320px"></div></div>
     </div>
+
+    <!-- 利息明细弹窗 -->
+    <div v-if="interestDetailModal.show" class="modal-overlay" @click.self="interestDetailModal.show = false">
+        <div class="modal" style="width:650px;max-height:75vh">
+            <h3>{{ interestDetailModal.title }}</h3>
+            <div style="overflow-y:auto;max-height:55vh">
+                <table class="data-table"><thead><tr>
+                    <th v-if="interestDetailModal.isMultiMonth" style="width:70px">月份</th>
+                    <th v-if="interestDetailModal.detailType === 'total'" style="width:80px">类型</th>
+                    <th>项目</th><th>人员</th><th>金额</th><th>备注</th>
+                </tr></thead>
+                    <tbody><tr v-for="(item, idx) in interestDetailModal.items" :key="idx">
+                        <td v-if="interestDetailModal.isMultiMonth" style="font-size:10px;color:#888">{{ item.period }}</td>
+                        <td v-if="interestDetailModal.detailType === 'total'">
+                            <span :class="'tag ' + (item._type === 'loan_interest' ? 'red' : item._type === 'pos_fee' ? 'blue' : item._type === 'installment_fee' ? 'yellow' : 'green')">{{ intTypeLabel(item._type) }}</span>
+                        </td>
+                        <td>{{ item.name }}</td><td>{{ item.person || '' }}</td>
+                        <td :style="{ color: 'var(--yellow)' }">¥{{ fmt(item.amount) }}</td>
+                        <td style="font-size:10px;color:#888">{{ item.note || '' }}</td>
+                    </tr></tbody>
+                </table>
+            </div>
+            <div style="margin-top:12px;text-align:right;font-size:12px;color:var(--yellow)">
+                合计: ¥{{ fmt(interestDetailModal.items.reduce((s,i) => s + (i.amount || 0), 0)) }}
+            </div>
+            <button class="btn btn-secondary" @click="interestDetailModal.show = false" style="margin-top:8px;width:100%">关闭</button>
+        </div>
+    </div>
 </div>`,
     data() {
         const now = new Date();
@@ -1465,6 +1526,7 @@ const ReportsPage = {
             interestFrom: '',
             interestTo: '',
             interestStats: { total_interest: 0, loan_interest: 0, pos_fee: 0, installment_fee: 0, mortgage_interest: 0 },
+            interestDetailModal: { show: false, title: '', items: [], isMultiMonth: false },
             priorityPlan: { items: [], total_debt: 0, total_monthly_interest: 0, method: '' },
             forecastData: { forecasts: [], trend_desc: '', base: {}, trends: {} },
             forecastMonths: 12,
@@ -1472,6 +1534,7 @@ const ReportsPage = {
             forecastSurplus: null,
             forecastNewBorrowing: 0,
             gapDetail: null,
+            priorityMethod: 'avalanche',
             // POS刷卡次数统计
             posCountType: 'yearly',
             posCountYear: new Date().getFullYear(),
@@ -1510,6 +1573,27 @@ const ReportsPage = {
         switchInterestType(type) {
             this.interestStatType = type;
             this.loadInterestStats();
+        },
+        intTypeLabel(t) { const m = { loan_interest: '贷款利息', pos_fee: 'POS手续费', installment_fee: '分期手续费', mortgage_interest: '房贷利息' }; return m[t] || t; },
+        async showInterestDetail(title, type) {
+            let url = '/reports/interest-detail?stat_type=' + this.interestStatType;
+            if (this.interestStatType === 'yearly') url += '&year=' + this.interestYear;
+            else if (this.interestStatType === 'monthly') { const [y, m] = this.interestMonth.split('-'); url += '&year=' + y + '&month=' + parseInt(m); }
+            else if (this.interestStatType === 'range' && this.interestFrom && this.interestTo) url += '&date_from=' + this.interestFrom + '&date_to=' + this.interestTo;
+            try {
+                const data = await api(url);
+                let items = [];
+                if (type === 'total') {
+                    // 总利息 = 合并所有类型
+                    for (const t of ['loan_interest', 'pos_fee', 'installment_fee', 'mortgage_interest']) {
+                        const arr = data[t] || [];
+                        items = items.concat(arr.map(i => ({ ...i, _type: t })));
+                    }
+                } else {
+                    items = data[type] || [];
+                }
+                this.interestDetailModal = { show: true, title: title, items: items, isMultiMonth: data.is_multi_month, detailType: type };
+            } catch(e) { this.showToast(e.message, 'error'); }
         },
         async loadInterestStats() {
             let url = '/reports/interest-stats?stat_type=' + this.interestStatType;
@@ -1604,7 +1688,11 @@ const ReportsPage = {
             window.addEventListener('resize', () => chart.resize());
         },
         async loadPriorityPlan() {
-            try { this.priorityPlan = await api('/reports/repay-priority'); } catch(e) {}
+            try { this.priorityPlan = await api('/reports/repay-priority?method=' + this.priorityMethod); } catch(e) {}
+        },
+        async switchPriorityMethod(m) {
+            this.priorityMethod = m;
+            await this.loadPriorityPlan();
         },
         async loadForecast() {
             let months = this.forecastMonths;
@@ -1783,6 +1871,32 @@ const SettingsPage = {
 <div>
     <div class="page-header"><h2>设置</h2></div>
     <div class="section-card">
+        <h3 style="margin:0 0 12px 0">手头现金</h3>
+        <p style="font-size:11px;color:var(--text-secondary);margin-bottom:12px">录入当前可用于还款的现金余额，用于现金流破裂预警和净值计算</p>
+        <div class="form-row" style="gap:8px;align-items:flex-end">
+            <div class="form-group" style="margin:0;flex:1">
+                <label>当前余额</label>
+                <input v-model.number="cashForm.amount" type="number" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group" style="margin:0">
+                <label>备注</label>
+                <input v-model="cashForm.note" placeholder="如：6月工资到账">
+            </div>
+            <button class="btn btn-primary" @click="addCash" style="margin-bottom:12px">更新余额</button>
+        </div>
+        <div v-if="latestCash && latestCash.amount > 0" style="margin-top:8px;font-size:12px;color:var(--blue)">
+            最近记录: ¥{{ fmt(latestCash.amount) }} ({{ latestCash.recorded_at }})
+        </div>
+        <div v-if="cashHistory.length > 0" style="margin-top:12px">
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">历史记录</div>
+            <table class="data-table"><thead><tr><th>日期</th><th>金额</th><th>备注</th></tr></thead>
+                <tbody><tr v-for="r in cashHistory" :key="r.id">
+                    <td>{{ r.recorded_at }}</td><td style="color:var(--green)">¥{{ fmt(r.amount) }}</td><td>{{ r.note }}</td>
+                </tr></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="section-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <h3 style="margin:0">数据管理</h3>
             <button class="btn btn-danger btn-sm" @click="clearAllData">清空所有财务数据</button>
@@ -1806,9 +1920,18 @@ const SettingsPage = {
         </table>
     </div>
 </div>`,
-    data() { return { feeConfigs: [], feeForm: { fee_type: 'pos_swipe', rate: 0.006, description: '' } }; },
-    async mounted() { try { this.feeConfigs = await api('/fee-configs/'); } catch(e) {} },
+    data() { return { feeConfigs: [], feeForm: { fee_type: 'pos_swipe', rate: 0.006, description: '' }, cashForm: { amount: 0, note: '' }, latestCash: null, cashHistory: [] }; },
+    async mounted() {
+        try { this.feeConfigs = await api('/fee-configs/'); } catch(e) {}
+        try { this.latestCash = await api('/settings/cash/latest'); } catch(e) {}
+        try { this.cashHistory = await api('/settings/cash/history?limit=12'); } catch(e) {}
+    },
     methods: {
+        fmt,
+        async addCash() {
+            if (!this.cashForm.amount) return this.showToast('请输入金额', 'error');
+            try { await api('/settings/cash', { method: 'POST', body: JSON.stringify(this.cashForm) }); this.showToast('现金余额已更新'); this.cashForm.note = ''; this.latestCash = await api('/settings/cash/latest'); this.cashHistory = await api('/settings/cash/history?limit=12'); } catch(e) { this.showToast(e.message, 'error'); }
+        },
         async addFeeConfig() {
             try { await api('/fee-configs/', { method: 'POST', body: JSON.stringify(this.feeForm) }); this.showToast('费率已添加'); this.feeConfigs = await api('/fee-configs/'); } catch(e) { this.showToast(e.message, 'error'); }
         },
@@ -1833,6 +1956,103 @@ const NotFoundPage = {
 </div>`,
 };
 
+// ---- Simulator ----
+const SimulatorPage = {
+    mixins: [ToastMixin, ChartMixin],
+    template: `
+<div>
+    <div class="page-header"><h2>债务模拟器</h2><p>情景分析、收入测算与风险评级</p></div>
+    <div v-if="risk && risk.overall" class="stat-cards" style="margin-bottom:16px">
+        <div class="stat-card v2-stat tooltip-card" :style="{ borderLeft: '3px solid ' + risk.overall.color }">
+            <div class="label">综合风险评级</div>
+            <span class="tooltip-text">5维加权评分: 生存线(25%) + 利息吞噬(25%) + 负债率(20%) + 现金流(15%) + 现金(15%)</span>
+            <div class="value" :style="{ color: risk.overall.color }">{{ risk.overall.grade }}</div>
+            <div style="font-size:12px;margin-top:4px" :style="{ color: risk.overall.color }">{{ risk.overall.label }}</div>
+            <span class="v2-risk-badge" :style="{ background: risk.overall.color + '22', color: risk.overall.color, border: '1px solid ' + risk.overall.color + '44' }">评分 {{ risk.overall.score }}</span>
+        </div>
+        <div class="stat-card v2-stat tooltip-card" v-for="(d, k) in risk.dimensions" :key="k" :style="{ borderLeft: '3px solid ' + d.color }">
+            <div class="label">{{ d.name }}</div>
+            <div class="value" :style="{ color: d.color, fontSize: '18px' }">{{ d.grade }}</div>
+            <span class="v2-risk-badge" :style="{ background: d.color + '22', color: d.color, border: '1px solid ' + d.color + '44' }">{{ d.label }}</span>
+            <span class="tooltip-text">{{ dimTooltip(k, d) }}</span>
+        </div>
+    </div>
+
+    <div class="section-title">收入模拟器</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <span style="font-size:12px;color:#888">预设: 薪资</span>
+        <span class="filter-chip" v-for="s in [12000,15000,18000,22000,30000]" :key="'s'+s" :class="{ active: simSalary === s }" @click="simSalary = s; loadPresets()">¥{{ s.toLocaleString() }}</span>
+        <span style="font-size:12px;color:#888;margin-left:8px">副业</span>
+        <span class="filter-chip" v-for="s in [1000,3000,5000,10000]" :key="'side'+s" :class="{ active: simSide === s }" @click="simSide = simSide === s ? 0 : s; loadPresets()">+¥{{ s.toLocaleString() }}</span>
+        <span style="font-size:12px;color:#888;margin-left:8px">自定义</span>
+        <input v-model.number="simSalary" type="number" style="width:100px;padding:4px 8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px" @change="loadPresets" placeholder="薪资">
+        <input v-model.number="simSide" type="number" style="width:100px;padding:4px 8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px" @change="loadPresets" placeholder="副业">
+    </div>
+    <div class="chart-row" style="overflow-x:auto">
+        <table class="data-table"><thead><tr>
+            <th>类型</th><th>月收入</th>
+            <th title="月收入 − 月支出 − 月利息，正值=止血">生存线</th>
+            <th title="月利息 ÷ 月收入 × 100%，利息对收入的侵蚀程度">利息吞噬率</th>
+            <th title="总负债 ÷ 生存线，按当前速度还清债务的月数">债务自由</th>
+            <th title="生存线 × 12，一年能净还多少债务">年度净还债</th>
+        </tr></thead>
+            <tbody><tr v-for="(r, k) in presets" :key="k" :style="{ background: k.startsWith('salary') ? 'rgba(79,172,254,0.04)' : k.startsWith('side') ? 'rgba(249,202,36,0.04)' : k.startsWith('combo') ? 'rgba(0,210,160,0.04)' : '' }">
+                <td>{{ r.type }}</td><td>{{ r.monthly_income }}</td>
+                <td :style="{ color: r.survival_line < 0 ? 'var(--red)' : 'var(--green)' }">{{ r.survival_line >= 0 ? '+' : '' }}{{ fmt(r.survival_line) }}</td>
+                <td :style="{ color: r.interest_rate > 40 ? 'var(--red)' : r.interest_rate > 20 ? 'var(--yellow)' : 'var(--green)' }">{{ r.interest_rate }}%</td>
+                <td>{{ r.debt_freedom ? (r.debt_freedom >= 12 ? (r.debt_freedom/12).toFixed(1)+'年' : r.debt_freedom+'个月') : '无法还清' }}</td>
+                <td :style="{ color: r.annual_repay < 0 ? 'var(--red)' : 'var(--green)' }">{{ r.annual_repay >= 0 ? '+' : '' }}¥{{ fmt(Math.abs(r.annual_repay)) }}</td>
+            </tr></tbody>
+        </table>
+    </div>
+
+    <div class="section-title">提前还款模拟</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <span style="font-size:12px;color:#888">每月额外还款:</span>
+        <span class="filter-chip" v-for="e in [1000,5000,10000]" :key="'e'+e" :class="{ active: extraPayment === e }" @click="extraPayment = extraPayment === e ? 0 : e; loadPresets()">+¥{{ e.toLocaleString() }}</span>
+        <input v-model.number="extraPayment" type="number" style="width:100px;padding:4px 8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px" @change="loadPresets" placeholder="自定义">
+    </div>
+    <div class="chart-row" style="overflow-x:auto" v-if="extraPayment > 0">
+        <table class="data-table"><thead><tr><th>额外月还款</th><th>新生存线</th><th>新债务自由</th><th>年度多还</th></tr></thead>
+            <tbody><tr>
+                <td style="color:var(--green)">+¥{{ extraPayment.toLocaleString() }}</td>
+                <td :style="{ color: (extraEffect.new_survival_line < 0 ? 'var(--red)' : 'var(--green)') }">{{ extraEffect.new_survival_line >= 0 ? '+' : '' }}{{ fmt(extraEffect.new_survival_line) }}</td>
+                <td>{{ extraEffect.new_debt_freedom ? (extraEffect.new_debt_freedom >= 12 ? (extraEffect.new_debt_freedom/12).toFixed(1)+'年' : extraEffect.new_debt_freedom+'个月') : '无法还清' }}</td>
+                <td style="color:var(--green)">¥{{ fmt(extraEffect.annual_interest_saved) }}</td>
+            </tr></tbody>
+        </table>
+    </div>
+</div>`,
+    data() { return { risk: null, presets: {}, simSalary: 0, simSide: 0, extraPayment: 0, extraEffect: {} }; },
+    async mounted() {
+        try { this.risk = await api('/v2/risk-assessment'); } catch(e) {}
+        try { this.presets = await api('/v2/presets'); } catch(e) {}
+    },
+    methods: {
+        fmt,
+        dimTooltip(k, d) {
+            const tips = {
+                survival_line: '当前值 ¥' + (d.value || 0) + ' · 月收入−月支出−月利息 · 权重25% · 正值=止血',
+                interest_consumption: '当前值 ' + (d.value || 0) + '% · 月利息÷月收入×100% · 权重25% · <15%健康 >30%高危',
+                debt_ratio: '当前值 ' + (d.value || 0) + '% · 总负债÷月收入×100% · 权重20% · <50%健康 >80%高危',
+                cash_flow: '当前值 ' + (d.value ? d.value + '个月' : '无风险') + ' · 手头现金÷|月缺口| · 权重15% · >12月安全 <3月高危',
+                cash_on_hand: '当前值 ¥' + (d.value || 0) + ' · 手头可用现金余额 · 权重15% · 覆盖月开支越多越安全',
+            };
+            return tips[k] || '';
+        },
+        async loadPresets() {
+            const params = [];
+            if (this.simSalary) params.push('salary=' + this.simSalary);
+            if (this.simSide) params.push('side_income=' + this.simSide);
+            if (this.extraPayment) params.push('extra_payment=' + this.extraPayment);
+            const url = '/v2/simulator' + (params.length ? '?' + params.join('&') : '');
+            try { this.simResult = await api(url); this.extraEffect = this.simResult.extra_payment_effect || {}; } catch(e) {}
+            try { this.presets = await api('/v2/presets'); } catch(e) {}
+            try { this.risk = await api('/v2/risk-assessment'); } catch(e) {}
+        },
+    },
+};
+
 // ---- Routes ----
 const routes = [
     { path: '/', redirect: '/finance/dashboard' },
@@ -1851,6 +2071,7 @@ const routes = [
     { path: '/finance/reports', component: ReportsPage },
     { path: '/finance/recycle-bin', component: RecycleBinPage },
     { path: '/finance/settings', component: SettingsPage },
+    { path: '/finance/simulator', component: SimulatorPage },
     { path: '/finance/login', component: LoginPage },
     { path: '/:pathMatch(.*)*', component: NotFoundPage },
 ];
@@ -1889,6 +2110,7 @@ const App = {
                 { path: '/finance/persons', label: '人员管理', icon: '👤', hash: '#/finance/persons' },
                 { path: '/finance/platforms', label: '借贷平台', icon: '🏢', hash: '#/finance/platforms' },
                 { path: '/finance/recycle-bin', label: '回收站', icon: '🗑️', hash: '#/finance/recycle-bin' },
+                { path: '/finance/simulator', label: '债务模拟器', icon: '🔬', hash: '#/finance/simulator' },
                 { path: '/finance/settings', label: '设置', icon: '⚙️', hash: '#/finance/settings' },
             ],
         };

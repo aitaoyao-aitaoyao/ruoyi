@@ -576,6 +576,119 @@ def gap_analysis_detail(
     }
 
 
+@router.get("/interest-detail")
+def interest_detail(
+    stat_type: str = Query("monthly", description="monthly / yearly / range"),
+    year: int = Query(None),
+    month: int = Query(None),
+    date_from: str = Query(None),
+    date_to: str = Query(None),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """利息/手续费明细。多月份时按月汇总，单月份时逐项明细。"""
+    today = date.today()
+    is_multi_month = stat_type in ("yearly", "range")
+
+    # 确定日期过滤条件
+    if stat_type == "range" and date_from and date_to:
+        date_filter_loan = (RepaymentPlan.due_date >= date_from) & (RepaymentPlan.due_date <= date_to)
+        date_filter_pos = (PosSwipe.swipe_date >= date_from) & (PosSwipe.swipe_date <= date_to)
+        period_label = f"{date_from} ~ {date_to}"
+    elif stat_type == "monthly" and year and month:
+        period_str = f"{year}-{month:02d}"
+        date_filter_loan = func.strftime("%Y-%m", RepaymentPlan.due_date) == period_str
+        date_filter_pos = func.strftime("%Y-%m", PosSwipe.swipe_date) == period_str
+        period_label = period_str
+    elif stat_type == "yearly" and year:
+        period_str = f"{year}-"
+        date_filter_loan = func.strftime("%Y-%m", RepaymentPlan.due_date).like(f"{period_str}%")
+        date_filter_pos = func.strftime("%Y-%m", PosSwipe.swipe_date).like(f"{period_str}%")
+        period_label = f"{year}年"
+    else:
+        year = today.year
+        period_str = f"{year}-"
+        date_filter_loan = func.strftime("%Y-%m", RepaymentPlan.due_date).like(f"{period_str}%")
+        date_filter_pos = func.strftime("%Y-%m", PosSwipe.swipe_date).like(f"{period_str}%")
+        period_label = f"{year}年"
+
+    result = {"period": period_label, "stat_type": stat_type, "is_multi_month": is_multi_month}
+
+    if is_multi_month:
+        # 多月份 → 逐项明细（带月份列，保留平台/卡名称）
+        loan_items = db.query(RepaymentPlan).filter(
+            RepaymentPlan.status == "paid", date_filter_loan
+        ).order_by(RepaymentPlan.due_date).all()
+        result["loan_interest"] = [{"period": (rp.due_date.strftime("%Y-%m") if rp.due_date else ""), "name": f"{rp.loan.platform.name if rp.loan and rp.loan.platform else '贷款'} #{rp.loan_id}", "person": rp.person.name if rp.person else "", "amount": round(rp.interest, 2), "note": f"第{rp.period_no}期" if rp.period_no else ""} for rp in loan_items]
+
+        # POS手续费逐笔（带月份）
+        pos_items = db.query(PosSwipe).filter(date_filter_pos).order_by(PosSwipe.swipe_date).all()
+        result["pos_fee"] = [{"period": p.swipe_date.strftime("%Y-%m") if p.swipe_date else "", "name": f"POS #{p.id}", "person": p.person.name if p.person else "", "amount": round(p.fee, 2), "note": f"金额¥{int(p.amount):,}"} for p in pos_items]
+
+        # 分期手续费逐项（只计已还期数，与 interest-stats 保持一致）
+        inst_items = []
+        installments = db.query(CardInstallment).all()
+        for inst in installments:
+            if inst.total_fee <= 0 or inst.paid_periods <= 0: continue
+            fee_per = inst.total_fee / inst.periods
+            card_name = inst.card.bank if inst.card else ""
+            for n in range(1, inst.paid_periods + 1):
+                pd = inst.start_date + relativedelta(months=n - 1)
+                m_key = pd.strftime("%Y-%m")
+                # 日期过滤
+                if date_from and m_key < date_from: continue
+                if date_to and m_key > date_to: continue
+                if year and m_key[:4] != str(year): continue
+                inst_items.append({"period": m_key, "name": f"{card_name} 分期#{inst.id}", "person": inst.person.name if inst.person else "", "amount": round(fee_per, 2), "note": f"总额¥{int(inst.amount):,} {inst.periods}期"})
+        result["installment_fee"] = sorted(inst_items, key=lambda x: x["period"])
+
+        # 房贷利息（按月份生成，与 stats 对齐）
+        mortgages = db.query(Mortgage).filter(Mortgage.status == "active").all()
+        mtg_items = []
+        if year:
+            for m in mortgages:
+                mtg_monthly_int = round(m.remaining_principal * m.rate / 12, 2)
+                for mm in range(1, 13):
+                    m_key = f"{year}-{mm:02d}"
+                    if date_from and m_key < date_from: continue
+                    if date_to and m_key > date_to: continue
+                    mtg_items.append({"period": m_key, "name": f"{m.bank} {m.house_name}", "person": m.person.name if m.person else "", "amount": mtg_monthly_int, "note": f"剩余本金¥{int(m.remaining_principal):,}"})
+        result["mortgage_interest"] = mtg_items
+    else:
+        # 单月份 → 逐项明细
+        # 贷款已付利息
+        loan_items = db.query(RepaymentPlan).filter(
+            RepaymentPlan.status == "paid", date_filter_loan
+        ).all()
+        result["loan_interest"] = [{"name": f"{rp.loan.platform.name if rp.loan and rp.loan.platform else '贷款'} #{rp.loan_id}", "person": rp.person.name if rp.person else "", "amount": round(rp.interest, 2), "note": f"第{rp.period_no}期" if rp.period_no else ""} for rp in loan_items]
+
+        # POS手续费逐笔
+        pos_items = db.query(PosSwipe).filter(date_filter_pos).all()
+        result["pos_fee"] = [{"name": f"POS刷卡 #{p.id}", "person": p.person.name if p.person else "", "amount": round(p.fee, 2), "note": f"金额¥{int(p.amount):,} · {p.swipe_date.strftime('%Y-%m-%d') if p.swipe_date else ''}"} for p in pos_items]
+
+        # 分期手续费逐项（只计已还期数）
+        inst_items = []
+        installments = db.query(CardInstallment).all()
+        for inst in installments:
+            if inst.total_fee <= 0 or inst.paid_periods <= 0: continue
+            fee_per = inst.total_fee / inst.periods
+            count = 0
+            for n in range(1, inst.paid_periods + 1):
+                pd = inst.start_date + relativedelta(months=n - 1)
+                if pd.year == (year or today.year) and (month is None or pd.month == month):
+                    count += 1
+            if count > 0:
+                card_name = inst.card.bank if inst.card else ""
+                inst_items.append({"name": f"{card_name} 分期#{inst.id}", "person": inst.person.name if inst.person else "", "amount": round(fee_per * count, 2), "note": f"每期¥{round(fee_per, 2)} × {count}期"})
+        result["installment_fee"] = inst_items
+
+        # 房贷利息
+        mortgages = db.query(Mortgage).filter(Mortgage.status == "active").all()
+        result["mortgage_interest"] = [{"name": f"{m.bank} {m.house_name}", "person": m.person.name if m.person else "", "amount": round(m.remaining_principal * m.rate / 12, 2), "note": f"剩余本金¥{int(m.remaining_principal):,}"} for m in mortgages]
+
+    return result
+
+
 @router.get("/interest-stats")
 def interest_stats(
     stat_type: str = Query("monthly", description="monthly / yearly / range"),
@@ -588,17 +701,17 @@ def interest_stats(
 ):
     """按类型统计利息/手续费：贷款利息、POS手续费、分期手续费、房贷利息。"""
     if stat_type == "range" and date_from and date_to:
-        date_filter_loan = (RepaymentPlan.paid_date >= date_from) & (RepaymentPlan.paid_date <= date_to)
+        date_filter_loan = (RepaymentPlan.due_date >= date_from) & (RepaymentPlan.due_date <= date_to)
         date_filter_pos = (PosSwipe.swipe_date >= date_from) & (PosSwipe.swipe_date <= date_to)
         period_label = f"{date_from} ~ {date_to}"
     elif stat_type == "monthly" and year and month:
         period_str = f"{year}-{month:02d}"
-        date_filter_loan = func.strftime("%Y-%m", RepaymentPlan.paid_date) == period_str
+        date_filter_loan = func.strftime("%Y-%m", RepaymentPlan.due_date) == period_str
         date_filter_pos = func.strftime("%Y-%m", PosSwipe.swipe_date) == period_str
         period_label = period_str
     elif stat_type == "yearly" and year:
         period_str = f"{year}-"
-        date_filter_loan = func.strftime("%Y-%m", RepaymentPlan.paid_date).like(f"{period_str}%")
+        date_filter_loan = func.strftime("%Y-%m", RepaymentPlan.due_date).like(f"{period_str}%")
         date_filter_pos = func.strftime("%Y-%m", PosSwipe.swipe_date).like(f"{period_str}%")
         period_label = f"{year}年"
     else:
@@ -606,7 +719,7 @@ def interest_stats(
         year = date.today().year
         month = None
         period_str = f"{year}-"
-        date_filter_loan = func.strftime("%Y-%m", RepaymentPlan.paid_date).like(f"{period_str}%")
+        date_filter_loan = func.strftime("%Y-%m", RepaymentPlan.due_date).like(f"{period_str}%")
         date_filter_pos = func.strftime("%Y-%m", PosSwipe.swipe_date).like(f"{period_str}%")
         period_label = f"{year}年"
 
@@ -687,90 +800,83 @@ def interest_stats(
     }
 
 
-@router.get("/repay-priority")
-def repay_priority(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """生成优先还款方案，按年化利率从高到低排列（雪崩法）。"""
+def _collect_debt_items(db):
+    """收集所有债务项目，返回统一格式的列表。"""
     items = []
-
-    # 信用卡（按每张卡的实际利率）
     cards = db.query(CreditCard).filter(CreditCard.status == "active", CreditCard.current_balance > 0).all()
     for c in cards:
         annual_rate = c.interest_rate or 0.1825
-        items.append({
-            "debt_type": "信用卡",
-            "name": f"{c.bank} 尾号{c.card_number_last4}",
-            "person_name": c.person.name if c.person else "",
-            "balance": round(c.current_balance, 2),
-            "annual_rate": round(annual_rate, 4),
-            "rate_label": f"{(annual_rate * 100):.2f}%",
-            "note": f"透支利率 {(annual_rate*100):.2f}%",
-        })
-
-    # 分期
+        items.append({"debt_type": "信用卡", "name": f"{c.bank} 尾号{c.card_number_last4}", "person_name": c.person.name if c.person else "", "balance": round(c.current_balance, 2), "annual_rate": round(annual_rate, 4), "rate_label": f"{(annual_rate * 100):.2f}%", "note": f"透支利率 {(annual_rate*100):.2f}%"})
     installments = db.query(CardInstallment).all()
     for inst in installments:
         remaining = inst.amount - inst.period_principal * min(inst.paid_periods, inst.periods)
-        if remaining <= 0:
-            continue
+        if remaining <= 0: continue
         annual_rate = inst.annual_rate or 0
         card_name = inst.card.bank if inst.card else ""
-        items.append({
-            "debt_type": "分期",
-            "name": f"{card_name} 分期#{inst.id}",
-            "person_name": inst.person.name if inst.person else "",
-            "balance": round(remaining, 2),
-            "annual_rate": round(annual_rate, 4),
-            "rate_label": f"{(annual_rate * 100):.2f}%",
-            "note": f"剩余{inst.periods - inst.paid_periods}期，每期¥{round(inst.period_total, 2)}",
-        })
-
-    # 贷款
+        items.append({"debt_type": "分期", "name": f"{card_name} 分期#{inst.id}", "person_name": inst.person.name if inst.person else "", "balance": round(remaining, 2), "annual_rate": round(annual_rate, 4), "rate_label": f"{(annual_rate * 100):.2f}%", "note": f"剩余{inst.periods - inst.paid_periods}期，每期¥{round(inst.period_total, 2)}"})
     loans = db.query(Loan).filter(Loan.status == "active").all()
     for loan in loans:
-        pending_principal = db.query(func.coalesce(func.sum(RepaymentPlan.principal), 0)).filter(
-            RepaymentPlan.loan_id == loan.id,
-            RepaymentPlan.status == "pending",
-        ).scalar() or 0
-        if pending_principal <= 0:
-            pending_principal = loan.amount
-        if loan.rate_type == "annual":
-            annual_rate = loan.rate
-        else:
-            annual_rate = loan.rate * 12  # monthly to annual
-        items.append({
-            "debt_type": "贷款",
-            "name": f"{loan.platform.name if loan.platform else ''} #{loan.id}",
-            "person_name": loan.person.name if loan.person else "",
-            "balance": round(pending_principal, 2),
-            "annual_rate": round(annual_rate, 4),
-            "rate_label": f"{(annual_rate * 100):.2f}%",
-            "note": loan.repay_method if loan.repay_method else "",
-        })
-
-    # 房贷
+        pending_principal = db.query(func.coalesce(func.sum(RepaymentPlan.principal), 0)).filter(RepaymentPlan.loan_id == loan.id, RepaymentPlan.status == "pending").scalar() or 0
+        if pending_principal <= 0: pending_principal = loan.amount
+        annual_rate = loan.rate if loan.rate_type == "annual" else loan.rate * 12
+        items.append({"debt_type": "贷款", "name": f"{loan.platform.name if loan.platform else ''} #{loan.id}", "person_name": loan.person.name if loan.person else "", "balance": round(pending_principal, 2), "annual_rate": round(annual_rate, 4), "rate_label": f"{(annual_rate * 100):.2f}%", "note": loan.repay_method if loan.repay_method else ""})
     mortgages = db.query(Mortgage).filter(Mortgage.status == "active", Mortgage.remaining_principal > 0).all()
     for m in mortgages:
-        items.append({
-            "debt_type": "房贷",
-            "name": f"{m.bank} {m.house_name}",
-            "person_name": m.person.name if m.person else "",
-            "balance": round(m.remaining_principal, 2),
-            "annual_rate": round(m.rate, 4),
-            "rate_label": f"{(m.rate * 100):.2f}%",
-            "note": f"月供¥{round(m.monthly_payment, 2)}",
-        })
+        items.append({"debt_type": "房贷", "name": f"{m.bank} {m.house_name}", "person_name": m.person.name if m.person else "", "balance": round(m.remaining_principal, 2), "annual_rate": round(m.rate, 4), "rate_label": f"{(m.rate * 100):.2f}%", "note": f"月供¥{round(m.monthly_payment, 2)}"})
+    return items
 
-    # 按年化利率降序排列（雪崩法）
-    items.sort(key=lambda x: x["annual_rate"], reverse=True)
 
+def _estimate_repay_time(items, monthly_payment):
+    """估算按给定顺序还清债务所需月数。每月还款额优先分配给排在前面的债务。"""
+    remaining = [it["balance"] for it in items]
+    total_interest = 0.0
+    month = 0
+    while any(r > 0.01 for r in remaining) and month < 600:
+        month += 1
+        budget = monthly_payment
+        for i in range(len(remaining)):
+            if remaining[i] <= 0.01: continue
+            monthly_int = remaining[i] * items[i]["annual_rate"] / 12
+            total_interest += monthly_int
+            principal_pay = min(budget - monthly_int, remaining[i])
+            if principal_pay > 0:
+                remaining[i] -= principal_pay
+                budget -= principal_pay + monthly_int
+            if budget <= 0: break
+    return {"months": month, "total_interest": round(total_interest, 2)}
+
+
+@router.get("/repay-priority")
+def repay_priority(method: str = Query("avalanche", description="avalanche 或 snowball"), db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """生成优先还款方案，支持雪崩法（按利率降序）和雪球法（按余额升序）。"""
+    items = _collect_debt_items(db)
     total_debt = sum(it["balance"] for it in items)
     total_monthly_interest = sum(it["balance"] * it["annual_rate"] / 12 for it in items)
 
+    # 雪崩法：按利率降序
+    avalanche_items = sorted(items, key=lambda x: x["annual_rate"], reverse=True)
+    # 雪球法：按余额升序
+    snowball_items = sorted(items, key=lambda x: x["balance"])
+
+    # 估算月还款额（总月利息 + 10%本金）
+    estimated_payment = total_monthly_interest + (total_debt * 0.02) if total_debt > 0 else 0
+
+    avalanche_estimate = _estimate_repay_time(avalanche_items, estimated_payment)
+    snowball_estimate = _estimate_repay_time(snowball_items, estimated_payment)
+
+    selected = avalanche_items if method == "avalanche" else snowball_items
+    selected_method = "雪崩法（优先偿还利率最高的债务，总利息支出最小）" if method == "avalanche" else "雪球法（优先偿还余额最小的债务，快速获得成就感）"
+
     return {
-        "items": items,
+        "items": selected,
         "total_debt": round(total_debt, 2),
         "total_monthly_interest": round(total_monthly_interest, 2),
-        "method": "雪崩法（优先偿还利率最高的债务，总利息支出最小）",
+        "method": selected_method,
+        "method_type": method,
+        "comparison": {
+            "avalanche": {"months": avalanche_estimate["months"], "total_interest": avalanche_estimate["total_interest"], "description": "利息最少，数学最优"},
+            "snowball": {"months": snowball_estimate["months"], "total_interest": snowball_estimate["total_interest"], "description": "快速清零小债务，心理激励强"},
+        },
     }
 
 

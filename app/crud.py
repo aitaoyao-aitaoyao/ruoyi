@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User, Article, Category, Tag, Media, Role, Permission
 from app.models import Person, LoanPlatform, Loan, RepaymentPlan, PosSwipe, CreditCard
-from app.models import CreditCardTransaction, CardInstallment, Mortgage, Income, Expense, FeeConfig, DebtSnapshot, DeletedRecord
+from app.models import CreditCardTransaction, CardInstallment, Mortgage, Income, Expense, FeeConfig, DebtSnapshot, DeletedRecord, CashRecord
 from app import schemas
 from app.auth import hash_password
 from app.finance.calc_engine import calc_installment_annual_rate
@@ -930,6 +930,23 @@ def delete_income(db: Session, income_id: int) -> bool:
     db.delete(inc)
     db.commit()
     return True
+
+
+# --- Cash Record ---
+def create_cash_record(db: Session, data: schemas.CashRecordCreate, recorded_at: Optional[date] = None) -> CashRecord:
+    rec = CashRecord(amount=data.amount, recorded_at=recorded_at or date.today(), note=data.note)
+    db.add(rec)
+    db.commit()
+    db.refresh(rec)
+    return rec
+
+
+def get_cash_records(db: Session, limit: int = 24) -> list[CashRecord]:
+    return db.query(CashRecord).order_by(CashRecord.recorded_at.desc()).limit(limit).all()
+
+
+def get_latest_cash(db: Session) -> Optional[CashRecord]:
+    return db.query(CashRecord).order_by(CashRecord.recorded_at.desc(), CashRecord.id.desc()).first()
 
 
 # --- Expense ---
