@@ -53,6 +53,7 @@ def get_v2_dashboard(db: Session = Depends(get_db), user: User = Depends(get_cur
     today = date.today()
     month_prefix = today.strftime("%Y-%m")
     month_start = today.replace(day=1)
+    month_end = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
 
     # =============================================
     # 共用基础数据查询
@@ -72,7 +73,7 @@ def get_v2_dashboard(db: Session = Depends(get_db), user: User = Depends(get_cur
     loan_interest = db.query(func.coalesce(func.sum(RepaymentPlan.interest), 0)).filter(
         RepaymentPlan.status == "pending",
         RepaymentPlan.due_date >= month_start,
-        RepaymentPlan.due_date <= today.replace(day=28) + timedelta(days=7),
+        RepaymentPlan.due_date <= month_end,
     ).scalar() or 0
 
     # 当月分期手续费（全部分期中落在本月的期数，无论是否已还）

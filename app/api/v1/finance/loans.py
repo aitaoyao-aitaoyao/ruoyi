@@ -20,6 +20,15 @@ def _fix_plan_dates(plan: list[dict]) -> list[dict]:
 
 @router.post("/", response_model=schemas.LoanRead, status_code=201)
 def create_loan(data: schemas.LoanCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    # 无固定期限的个人借贷：不生成还款计划
+    if data.repay_method == "flexible" or data.periods <= 0:
+        data.periods = 0
+        data.rate = 0
+        data.rate_type = "monthly"
+        if not data.end_date:
+            data.end_date = None
+        return crud.create_loan(db, data, [])
+
     is_total_interest = data.rate_type == "total_interest"
     monthly_rate = convert_to_monthly_rate(
         rate=data.rate, rate_type=data.rate_type,

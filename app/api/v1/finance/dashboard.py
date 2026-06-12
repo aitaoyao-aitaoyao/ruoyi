@@ -27,12 +27,13 @@ def get_dashboard(db: Session = Depends(get_db), user: User = Depends(get_curren
     total_income = db.query(func.coalesce(func.sum(Income.amount), 0)).scalar() or 0
 
     month_start = today.replace(day=1)
+    month_end = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
 
-    # 1. 贷款利息（当前窗口内待还还款计划）
+    # 1. 贷款利息（当月待还还款计划，不跨月）
     loan_interest = db.query(func.coalesce(func.sum(RepaymentPlan.interest), 0)).filter(
         RepaymentPlan.status == "pending",
         RepaymentPlan.due_date >= month_start,
-        RepaymentPlan.due_date <= today.replace(day=28) + timedelta(days=7),
+        RepaymentPlan.due_date <= month_end,
     ).scalar() or 0
 
     # 2. 分期手续费（当月到期的期数，检查全部分期）
@@ -165,7 +166,7 @@ def monthly_interest_detail(db: Session = Depends(get_db), user: User = Depends(
     """本月应付利息明细：贷款利息、分期手续费、房贷利息"""
     today = date.today()
     month_start = today.replace(day=1)
-    month_end = today.replace(day=28) + timedelta(days=7)
+    month_end = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
 
     items = []
 

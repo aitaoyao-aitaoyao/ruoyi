@@ -33,6 +33,14 @@ try:
 except Exception:
     pass  # 列已存在则忽略
 
+try:
+    _conn = sqlite3.connect("app.db")
+    _conn.execute("ALTER TABLE loans ADD COLUMN paid_periods INTEGER DEFAULT 0")
+    _conn.commit()
+    _conn.close()
+except Exception:
+    pass
+
 # 确保默认管理员用户存在（用于首次登录）
 def _ensure_admin_user():
     db = SessionLocal()

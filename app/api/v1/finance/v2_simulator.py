@@ -158,10 +158,11 @@ def _compute_row(income, side, expense, interest, debt, type_label):
 def _get_monthly_interest(db, today):
     """获取当月总利息（复用 dashboard 逻辑）。"""
     month_start = today.replace(day=1)
+    month_end = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
     loan_interest = db.query(func.coalesce(func.sum(RepaymentPlan.interest), 0)).filter(
         RepaymentPlan.status == "pending",
         RepaymentPlan.due_date >= month_start,
-        RepaymentPlan.due_date <= today.replace(day=28) + timedelta(days=7),
+        RepaymentPlan.due_date <= month_end,
     ).scalar() or 0
 
     installments = db.query(CardInstallment).all()

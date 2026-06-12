@@ -184,6 +184,7 @@ class Loan(Base):
     status = Column(String(20), default="active")
     note = Column(String(200), default="")
     created_at = Column(DateTime, default=datetime.utcnow)
+    _paid_periods = Column("paid_periods", Integer, default=0)
 
     person = relationship("Person")
     platform = relationship("LoanPlatform")
@@ -191,7 +192,13 @@ class Loan(Base):
 
     @property
     def paid_periods(self):
-        return sum(1 for rp in self.repayments if rp.status == "paid")
+        # 优先用已还期数（手动保存或自动计算），其次用还款计划中已还的数量
+        from_plans = sum(1 for rp in self.repayments if rp.status == "paid")
+        return max(self._paid_periods, from_plans)
+
+    @paid_periods.setter
+    def paid_periods(self, value):
+        self._paid_periods = value
 
     @property
     def remaining_periods(self):

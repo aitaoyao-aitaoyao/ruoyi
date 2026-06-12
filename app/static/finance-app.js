@@ -528,19 +528,19 @@ const LoansPage = {
             </div>
             <div class="form-group"><label>借款金额</label><input v-model.number="form.amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
             <div class="form-row">
-                <div class="form-group"><label>利率类型</label><select v-model="form.rate_type" @change="onRateTypeChange"><option value="monthly">月利率</option><option value="annual">年利率</option><option value="total_interest">总利息反推</option></select></div>
-                <div class="form-group" v-if="form.rate_type === 'total_interest'"><label>总利息金额</label><input v-model.number="form.total_interest" type="number" min="0" step="0.01" placeholder="总利息金额"></div>
-                <div class="form-group" v-else>
+                <div class="form-group" v-if="form.repay_method !== 'flexible'"><label>利率类型</label><select v-model="form.rate_type" @change="onRateTypeChange"><option value="monthly">月利率</option><option value="annual">年利率</option><option value="total_interest">总利息反推</option></select></div>
+                <div class="form-group" v-if="form.rate_type === 'total_interest' && form.repay_method !== 'flexible'"><label>总利息金额</label><input v-model.number="form.total_interest" type="number" min="0" step="0.01" placeholder="总利息金额"></div>
+                <div class="form-group" v-else-if="form.repay_method !== 'flexible'">
                         <label>利率 (%)</label>
                         <input v-model.number="form.rate" type="number" step="0.01" :placeholder="form.rate_type === 'monthly' ? '月利: 0.5 表示 0.5%' : '年利: 4.11 表示 4.11%'">
                     </div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>还款方式</label><select v-model="form.repay_method"><option value="equal_installment">等额本息</option><option value="interest_first">先息后本</option><option value="bullet">到期还本付息</option></select></div>
-                <div class="form-group"><label>总期数</label><input v-model.number="form.periods" type="number" min="1" placeholder="12"></div>
+                <div class="form-group"><label>还款方式</label><select v-model="form.repay_method" @change="onRepayMethodChange"><option value="equal_installment">等额本息</option><option value="interest_first">先息后本</option><option value="bullet">到期还本付息</option><option value="flexible">无固定期限（个人借贷）</option></select></div>
+                <div class="form-group"><label>总期数</label><input v-model.number="form.periods" type="number" min="0" placeholder="0 表示无固定期数"></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>已还期数（已有借款填写）</label><input v-model.number="form.paid_periods" type="number" min="0" placeholder="0"></div>
+                <div class="form-group"><label>已还期数</label><input v-model.number="form.paid_periods" type="number" min="0" placeholder="0"></div>
                 <div class="form-group"><label>开始日期</label><input v-model="form.start_date" type="date"></div>
             </div>
             <div class="form-group"><label>结束日期</label><input v-model="form.end_date" type="date"></div>
@@ -597,8 +597,9 @@ const LoansPage = {
             if (l.rate_type === 'annual') return (l.rate * 100).toFixed(2) + '%';
             return (l.rate * 12 * 100).toFixed(2) + '%';
         },
-        repayMethodLabel(m) { const mp = { equal_installment: '等额本息', interest_first: '先息后本', bullet: '到期还本' }; return mp[m] || m; },
+        repayMethodLabel(m) { const mp = { equal_installment: '等额本息', interest_first: '先息后本', bullet: '到期还本', flexible: '无固定期' }; return mp[m] || m; },
         onRateTypeChange() { if (this.form.rate_type === 'total_interest') { this.form.rate = 0; } },
+        onRepayMethodChange() { if (this.form.repay_method === 'flexible') { this.form.periods = 0; this.form.rate = 0; } else if (!this.form.periods) { this.form.periods = 12; } },
         openCreate() {
             this.editing = null;
             this.form = {
@@ -611,19 +612,24 @@ const LoansPage = {
         },
         openEdit(l) {
             this.editing = l;
+            // 自动计算已还期数 = 当前月份 - 开始月份
+            const start = new Date(l.start_date);
+            const now = new Date();
+            const autoPaid = Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()));
             this.form = {
                 person_id: l.person_id, platform_id: l.platform_id,
                 amount: l.amount,
                 rate: l.rate_type === 'total_interest' ? 0 : +(l.rate * 100).toFixed(4),
                 rate_type: l.rate_type,
                 total_interest: l.rate_type === 'total_interest' ? l.rate : null,
-                repay_method: l.repay_method, periods: l.periods, paid_periods: l.paid_periods || 0,
+                repay_method: l.repay_method, periods: l.periods, paid_periods: Math.max(l.paid_periods || 0, autoPaid),
                 start_date: l.start_date, end_date: l.end_date, note: l.note || ''
             };
             this.showModal = true;
         },
         async submit() {
-            if (!this.form.amount || !this.form.periods) return this.showToast('请填写金额和期数', 'error');
+            if (!this.form.amount) return this.showToast('请填写金额', 'error');
+            if (this.form.repay_method !== 'flexible' && !this.form.periods) return this.showToast('请填写期数', 'error');
             if (this.editing) {
                 const body = { ...this.form };
                 if (body.rate_type === 'total_interest') {
@@ -633,7 +639,6 @@ const LoansPage = {
                     body.rate = body.rate / 100;
                 }
                 delete body.total_interest;
-                delete body.paid_periods;
                 if (!body.end_date) delete body.end_date;
                 try {
                     await api('/loans/' + this.editing.id, { method: 'PATCH', body: JSON.stringify(body) });
@@ -657,7 +662,6 @@ const LoansPage = {
                     body.rate = body.rate / 100;
                 }
                 delete body.total_interest;
-                delete body.paid_periods;
                 if (!body.end_date) delete body.end_date;
                 try {
                     const loan = await api('/loans/', { method: 'POST', body: JSON.stringify(body) });

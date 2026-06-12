@@ -307,8 +307,8 @@ class LoanCreate(BaseModel):
     @field_validator("repay_method")
     @classmethod
     def validate_repay_method(cls, v):
-        if v not in ("equal_installment", "interest_first", "bullet"):
-            raise ValueError("repay_method must be equal_installment, interest_first, or bullet")
+        if v not in ("equal_installment", "interest_first", "bullet", "flexible"):
+            raise ValueError("repay_method must be equal_installment, interest_first, bullet, or flexible")
         return v
 
     @field_validator("amount")
@@ -351,6 +351,7 @@ class LoanUpdate(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     periods: Optional[int] = None
+    paid_periods: Optional[int] = None
     status: Optional[str] = None
     note: Optional[str] = None
 
