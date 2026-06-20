@@ -379,7 +379,7 @@ const DashboardPage = {
                     chart.setOption({
                         tooltip: { trigger: 'axis', formatter: p => {
                             const d = results[p[0].dataIndex];
-                            return p[0].name + '<br/>收入: ¥' + fmt(d.total_income) + '<br/>支出: ¥' + fmt(d.total_expense) + '<br/>缺口: ¥' + fmt(d.gap);
+                            return p[0].name + '<br/>收入: ¥' + fmt(d.total_income) + '<br/>支出: ¥' + fmt(d.total_expense) + '<br/>缺口: ¥' + fmt(-d.gap);
                         }},
                         grid: { left: 60, right: 20, top: 20, bottom: 30 },
                         legend: { data: ['收入', '支出', '缺口'], textStyle: { color: '#888', fontSize: 11 }, top: 0 },
@@ -388,7 +388,7 @@ const DashboardPage = {
                         series: [
                             { name: '收入', type: 'bar', data: results.map(r => r.total_income), itemStyle: { color: '#00d2a0' }, barGap: 0 },
                             { name: '支出', type: 'bar', data: results.map(r => r.total_expense), itemStyle: { color: '#e94560' } },
-                            { name: '缺口', type: 'line', data: results.map(r => r.gap), lineStyle: { color: '#f9ca24' }, itemStyle: { color: '#f9ca24' }, symbol: 'diamond' },
+                            { name: '缺口', type: 'line', data: results.map(r => -r.gap), lineStyle: { color: '#f9ca24' }, itemStyle: { color: '#f9ca24' }, symbol: 'diamond' },
                         ]
                     });
                 });
