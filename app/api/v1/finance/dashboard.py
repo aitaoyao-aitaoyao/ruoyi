@@ -7,7 +7,7 @@ from app.db import get_db
 from app.auth import get_current_user
 from app.models import User
 from app import crud, schemas
-from app.models import Loan, RepaymentPlan, PosSwipe, CreditCard, CardInstallment, Mortgage, Income, Expense
+from app.models import Loan, RepaymentPlan, PosSwipe, CreditCard, CardInstallment, Mortgage, Income, Expense, CreditCardBill
 from app.finance.snapshot_service import compute_snapshot
 
 router = APIRouter(prefix="/finance", tags=["finance-dashboard"])
@@ -128,12 +128,20 @@ def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_
     for card in cards:
         due_this_month = date(today.year, today.month, min(card.due_day, 28))
         if today <= due_this_month <= cutoff:
+            # 用最新未还账单金额，不是卡余额
+            bill_amount = card.current_balance
+            latest_bill = db.query(CreditCardBill).filter(
+                CreditCardBill.card_id == card.id,
+                CreditCardBill.status != "paid"
+            ).order_by(CreditCardBill.bill_month.desc()).first()
+            if latest_bill:
+                bill_amount = max(0, latest_bill.bill_amount - latest_bill.paid_amount)
             card_map[card.id] = {
                 "bank": card.bank,
                 "person_name": card.person.name if card.person else "",
                 "card_last4": card.card_number_last4,
                 "due_date": due_this_month,
-                "amount": card.current_balance,
+                "amount": bill_amount,
                 "days_left": (due_this_month - today).days,
             }
 
