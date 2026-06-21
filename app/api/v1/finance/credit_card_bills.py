@@ -18,16 +18,17 @@ def _auto_create_bill(db: Session, card: CreditCard, today: date = None):
         today = date.today()
 
     # 计算当期账单周期
-    bill_month = today.strftime("%Y-%m")
-    # 账单日所在日期
-    if today.day > card.bill_day:
-        # 账单日已过，当期是本月
-        bill_start = date(today.year, today.month, card.bill_day) + timedelta(days=1)
-        bill_end = date(today.year, today.month, card.bill_day) + relativedelta(months=1)
-    else:
-        # 账单日还没到，当期是上月
-        bill_start = date(today.year, today.month, card.bill_day) - relativedelta(months=1) + timedelta(days=1)
+    # 例如 bill_day=10, today=6月21日 → 当期: 5月11日~6月10日, 还款日: 7月
+    # 例如 bill_day=10, today=6月5日 → 当期: 4月11日~5月10日, 还款日: 6月
+    if today.day >= card.bill_day:
+        # 本月账单日已过，当期=上月bill_day+1 ~ 本月bill_day
         bill_end = date(today.year, today.month, card.bill_day)
+        bill_start = bill_end - relativedelta(months=1) + timedelta(days=1)
+        bill_month = today.strftime("%Y-%m")
+    else:
+        # 本月账单日未到，当期=上上月bill_day+1 ~ 上月bill_day
+        bill_end = date(today.year, today.month, card.bill_day) - relativedelta(months=1)
+        bill_start = bill_end - relativedelta(months=1) + timedelta(days=1)
         bill_month = (today.replace(day=1) - relativedelta(months=1)).strftime("%Y-%m")
 
     # 检查是否已存在

@@ -882,7 +882,11 @@ const CreditCardsPage = {
             </div>
         </div>
         <div style="font-size:11px;color:#888;margin-top:6px">
-            额度 \u00a5{{ fmt(c.credit_limit) }} \u00b7 账单日 {{ c.bill_day }}号 \u00b7 还款日 {{ c.due_day }}号 \u00b7 年利率 {{ (c.interest_rate*100).toFixed(2) }}%
+            额度 ¥{{ fmt(c.credit_limit) }} · 账单日 {{ c.bill_day }}号 · 还款日 {{ c.due_day }}号
+            <span v-if="cardBills[c.id] && cardBills[c.id].length" style="margin-left:8px">
+                · 本期账单: <strong :style="{ color: cardBills[c.id][0].status === 'paid' ? 'var(--green)' : 'var(--red)' }">¥{{ fmt(cardBills[c.id][0].bill_amount) }}</strong>
+                <span :class="'tag ' + (cardBills[c.id][0].status === 'paid' ? 'green' : cardBills[c.id][0].status === 'partial' ? 'yellow' : cardBills[c.id][0].status === 'overdue' ? 'red' : 'blue')" style="margin-left:4px">{{ billStatusLabel(cardBills[c.id][0].status) }}</span>
+            </span>
         </div>
 
         <div v-if="viewingCard === c.id" style="margin-top:12px">
