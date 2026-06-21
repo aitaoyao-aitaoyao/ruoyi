@@ -2173,6 +2173,7 @@ const SettingsPage = {
         <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-secondary" @click="exportData">导出 CSV</button>
             <button class="btn btn-secondary" @click="backupDB">备份数据库</button>
+            <button class="btn btn-secondary" @click="cleanupData">清理冗余数据</button>
         </div>
     </div>
     <div class="section-card">
@@ -2208,6 +2209,10 @@ const SettingsPage = {
     },
     methods: {
         fmt,
+        async cleanupData() {
+            if (!confirm('清理系统自动生成的冗余记录？')) return;
+            try { const r = await api('/settings/cleanup', { method: 'POST' }); this.showToast(r.message || '清理完成'); } catch(e) { this.showToast(e.message, 'error'); }
+        },
         async backupDB() {
             try { const r = await api('/settings/backup', { method: 'POST' }); this.showToast(r.message || '备份完成'); } catch(e) { this.showToast(e.message, 'error'); }
         },

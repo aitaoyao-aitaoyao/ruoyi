@@ -56,6 +56,15 @@ def get_cash_history(limit: int = Query(24, ge=1, le=60), db: Session = Depends(
     return crud.get_cash_records(db, limit=limit)
 
 
+@router.post("/cleanup")
+def cleanup_data(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """清理系统自动生成的测试/冗余数据"""
+    from app.models import CreditCardTransaction, RepaymentPlan
+    deleted_txn = db.query(CreditCardTransaction).filter(CreditCardTransaction.description.like("[系统自动]%")).delete()
+    db.commit()
+    return {"message": f"已清理 {deleted_txn} 条系统自动记录"}
+
+
 @router.post("/backup")
 def backup_database(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """备份 app.db 到 backups/ 目录"""
