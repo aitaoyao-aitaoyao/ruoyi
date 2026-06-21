@@ -2,7 +2,7 @@
 from datetime import date
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models import Loan, RepaymentPlan, CreditCard, CardInstallment, Mortgage, PosSwipe
+from app.models import Loan, RepaymentPlan, CreditCard, CardInstallment, Mortgage, PosSwipe, CreditCardBill
 
 
 def compute_snapshot(db: Session, snapshot_date: date) -> dict:
@@ -18,12 +18,17 @@ def compute_snapshot(db: Session, snapshot_date: date) -> dict:
         if pending_principal > 0:
             loan_debt += pending_principal
         else:
-            # 没有还款计划或没有待还的，使用贷款全额
             loan_debt += loan.amount
 
-    card_debt = db.query(func.coalesce(func.sum(CreditCard.current_balance), 0)).filter(
-        CreditCard.status == "active"
-    ).scalar() or 0.0
+    # 信用卡负债 = 从未还账单计算（不包含已还清的账单）
+    card_debt = 0.0
+    active_cards = db.query(CreditCard).filter(CreditCard.status == "active").all()
+    for card in active_cards:
+        latest_bill = db.query(CreditCardBill).filter(
+            CreditCardBill.card_id == card.id
+        ).order_by(CreditCardBill.bill_month.desc()).first()
+        if latest_bill and latest_bill.status != "paid":
+            card_debt += max(0, latest_bill.bill_amount - latest_bill.paid_amount)
 
     installment_debt = 0.0
     installments = db.query(CardInstallment).all()

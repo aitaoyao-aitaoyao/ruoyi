@@ -15,7 +15,7 @@ from app.models import User
 from app.auth import hash_password
 from app.api.v1 import auth, articles, categories, tags, media, users, dashboard
 from app.api.v1.finance import persons, platforms, loans, pos_swipes
-from app.api.v1.finance import credit_cards, card_transactions, card_installments
+from app.api.v1.finance import credit_cards, card_transactions, card_installments, credit_card_bills
 from app.api.v1.finance import mortgages, incomes, expenses, fee_configs
 from app.api.v1.finance import dashboard as fin_dashboard, calc, transactions, reports, recycle_bin
 from app.api.v1.finance import v2_dashboard, settings, v2_simulator
@@ -91,6 +91,7 @@ app.include_router(pos_swipes.router, prefix="/api/v1")
 app.include_router(credit_cards.router, prefix="/api/v1")
 app.include_router(card_transactions.router, prefix="/api/v1")
 app.include_router(card_installments.router, prefix="/api/v1")
+app.include_router(credit_card_bills.router, prefix="/api/v1")
 app.include_router(mortgages.router, prefix="/api/v1")
 app.include_router(incomes.router, prefix="/api/v1")
 app.include_router(expenses.router, prefix="/api/v1")

@@ -687,6 +687,42 @@ class FeeConfigCreate(BaseModel):
     description: str = ""
 
 
+class CreditCardBillCreate(BaseModel):
+    card_id: int
+    bill_amount: Optional[float] = 0
+    paid_amount: Optional[float] = 0
+    interest: Optional[float] = 0
+    fee: Optional[float] = 0
+    note: str = ""
+
+
+class CreditCardBillUpdate(BaseModel):
+    bill_amount: Optional[float] = None
+    paid_amount: Optional[float] = None
+    interest: Optional[float] = None
+    fee: Optional[float] = None
+    status: Optional[str] = None
+    note: Optional[str] = None
+
+
+class CreditCardBillRead(BaseModel):
+    id: int
+    card_id: int
+    bill_month: str
+    bill_start: date
+    bill_end: date
+    due_date: date
+    bill_amount: float
+    paid_amount: float
+    min_payment: float
+    interest: float
+    fee: float
+    status: str
+    note: str
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
 class FeeConfigRead(BaseModel):
     id: int
     fee_type: str

@@ -795,23 +795,54 @@ const PosPage = {
 
 // ---- Credit Cards ----
 const CreditCardsPage = {
-    mixins: [ToastMixin, BatchDeleteMixin],
+    mixins: [ToastMixin],
     template: `
 <div>
     <div class="page-header"><h2>信用卡管理</h2></div>
-    <button class="btn btn-primary" @click="openCreate" style="margin-bottom:12px">+ 新增信用卡</button>
-    <button class="btn btn-danger btn-sm" @click="batchDelete(id => api('/credit-cards/' + id, { method: 'DELETE' }))" style="margin-bottom:12px;margin-left:8px">批量删除</button>
-    <table class="data-table"><thead><tr><th style="width:30px"><input type="checkbox" @change="toggleSelectAll"></th><th>ID</th><th>人员</th><th>银行</th><th>尾号</th><th>额度</th><th>已用额度</th><th>透支利率(年)</th><th>账单日</th><th>还款日</th><th>状态</th><th>操作</th></tr></thead>
-        <tbody><tr v-for="c in items" :key="c.id">
-            <td><input type="checkbox" :checked="selectedIds.includes(c.id)" @change="toggleSelect(c.id)"></td>
-            <td>{{ c.id }}</td><td>{{ c.person?.name || '-' }}</td><td>{{ c.bank }}</td><td>{{ c.card_number_last4 }}</td>
-            <td>¥{{ fmt(c.credit_limit) }}</td><td :style="{ color: c.current_balance > 0 ? 'var(--red)' : '' }">¥{{ fmt(c.current_balance) }}</td>
-            <td :style="{ color: 'var(--yellow)' }">{{ (c.interest_rate * 100).toFixed(2) }}%</td>
-            <td>每月{{ c.bill_day }}号</td><td>每月{{ c.due_day }}号</td>
-            <td><span :class="'tag ' + (c.status === 'active' ? 'green' : 'red')">{{ c.status === 'active' ? '正常' : '停用' }}</span></td>
-            <td><button class="btn btn-secondary btn-xs" @click="openEdit(c)" style="margin-right:4px">编辑</button><button class="btn btn-danger btn-xs" @click="remove(c.id)">删除</button></td>
-        </tr></tbody>
-    </table>
+    <button class="btn btn-primary" @click="openCreate" style="margin-bottom:16px">+ 新增信用卡</button>
+
+    <div class="section-card" v-for="c in items" :key="c.id" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <div>
+                <strong style="font-size:15px">{{ c.bank }}</strong>
+                <span style="color:#888;margin-left:8px;font-size:12px">尾号{{ c.card_number_last4 }}</span>
+                <span style="color:#888;margin-left:8px;font-size:12px">({{ c.person?.name }})</span>
+                <span :class="'tag ' + (c.status === 'active' ? 'green' : 'red')" style="margin-left:8px">{{ c.status === 'active' ? '正常' : '停用' }}</span>
+            </div>
+            <div style="display:flex;gap:4px">
+                <button class="btn btn-secondary btn-xs" @click="openEdit(c)">编辑信息</button>
+                <button class="btn btn-secondary btn-xs" @click="toggleBills(c)">{{ viewingCard === c.id ? '收起账单' : '查看账单' }}</button>
+                <button class="btn btn-danger btn-xs" @click="remove(c.id)">删除</button>
+            </div>
+        </div>
+        <div style="font-size:11px;color:#888;margin-top:6px">
+            额度 \u00a5{{ fmt(c.credit_limit) }} \u00b7 账单日 {{ c.bill_day }}号 \u00b7 还款日 {{ c.due_day }}号 \u00b7 年利率 {{ (c.interest_rate*100).toFixed(2) }}%
+        </div>
+
+        <div v-if="viewingCard === c.id" style="margin-top:12px">
+            <div v-if="cardBills[c.id] && cardBills[c.id].length" style="overflow-x:auto">
+                <table class="data-table"><thead><tr><th>账单月份</th><th>周期</th><th>还款日</th><th>账单金额</th><th>已还</th><th>未还</th><th>利息</th><th>手续费</th><th>状态</th><th>操作</th></tr></thead>
+                    <tbody><tr v-for="b in cardBills[c.id]" :key="b.id">
+                        <td>{{ b.bill_month }}</td>
+                        <td style="font-size:10px;color:#888">{{ b.bill_start }} ~ {{ b.bill_end }}</td>
+                        <td>{{ b.due_date }}</td>
+                        <td>\u00a5{{ fmt(b.bill_amount) }}</td>
+                        <td style="color:var(--green)">\u00a5{{ fmt(b.paid_amount) }}</td>
+                        <td :style="{ color: (b.bill_amount - b.paid_amount) > 0 ? 'var(--red)' : 'var(--green)' }">\u00a5{{ fmt(Math.max(0, b.bill_amount - b.paid_amount)) }}</td>
+                        <td>\u00a5{{ fmt(b.interest) }}</td>
+                        <td>\u00a5{{ fmt(b.fee) }}</td>
+                        <td><span :class="'tag ' + (b.status === 'paid' ? 'green' : b.status === 'partial' ? 'yellow' : b.status === 'overdue' ? 'red' : 'blue')">{{ billStatusLabel(b.status) }}</span></td>
+                        <td>
+                            <button v-if="b.status !== 'paid'" class="btn btn-secondary btn-xs" @click="payFull(b.id)" style="margin-right:2px">全额还</button>
+                            <button v-if="b.status === 'unpaid' || b.status === 'overdue'" class="btn btn-secondary btn-xs" @click="payMinimum(b.id)" style="margin-right:2px">最低还</button>
+                            <button class="btn btn-secondary btn-xs" @click="openBillEdit(b)">录入</button>
+                        </td>
+                    </tr></tbody>
+                </table>
+            </div>
+            <div v-else style="padding:12px;color:#888;font-size:12px">暂无账单（当期账单将自动生成）</div>
+        </div>
+    </div>
     <div v-if="items.length === 0" class="empty-state">暂无信用卡</div>
 
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
@@ -823,14 +854,11 @@ const CreditCardsPage = {
             </div>
             <div class="form-row">
                 <div class="form-group"><label>信用额度</label><input v-model.number="form.credit_limit" type="number" min="0" placeholder="50000"></div>
-                <div class="form-group"><label>当前已用额度</label><input v-model.number="form.current_balance" type="number" min="0" placeholder="0"></div>
+                <div class="form-group"><label>透支年利率</label><input v-model.number="form.interest_rate" type="number" step="0.0001" min="0" placeholder="0.1825"></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>透支年利率</label><input v-model.number="form.interest_rate" type="number" step="0.0001" min="0" placeholder="0.1825 = 18.25%"><span style="font-size:11px;color:#888;margin-top:4px">默认0.1825（日息万分之五=18.25%/年）</span></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>账单日（每月几号）</label><input v-model.number="form.bill_day" type="number" min="1" max="28" placeholder="5"></div>
-                <div class="form-group"><label>还款日（每月几号）</label><input v-model.number="form.due_day" type="number" min="1" max="28" placeholder="25"></div>
+                <div class="form-group"><label>账单日</label><input v-model.number="form.bill_day" type="number" min="1" max="28" placeholder="5"></div>
+                <div class="form-group"><label>还款日</label><input v-model.number="form.due_day" type="number" min="1" max="28" placeholder="25"></div>
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
                 <button class="btn btn-secondary" @click="showModal = false">取消</button>
@@ -838,27 +866,74 @@ const CreditCardsPage = {
             </div>
         </div>
     </div>
+
+    <div v-if="billEditModal.show" class="modal-overlay" @click.self="billEditModal.show = false">
+        <div class="modal"><h3>录入账单 \u2014 {{ billEditModal.bill_month }}</h3>
+            <div class="form-row">
+                <div class="form-group"><label>账单金额</label><input v-model.number="billForm.bill_amount" type="number" min="0" step="0.01"></div>
+                <div class="form-group"><label>实际还款</label><input v-model.number="billForm.paid_amount" type="number" min="0" step="0.01"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>本期利息</label><input v-model.number="billForm.interest" type="number" min="0" step="0.01"></div>
+                <div class="form-group"><label>本期手续费</label><input v-model.number="billForm.fee" type="number" min="0" step="0.01"></div>
+            </div>
+            <div class="form-group"><label>备注</label><input v-model="billForm.note"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+                <button class="btn btn-secondary" @click="billEditModal.show = false">取消</button>
+                <button class="btn btn-primary" @click="saveBill">保存</button>
+            </div>
+        </div>
+    </div>
 </div>`,
     data() {
-        return { items: [], persons: [], showModal: false, editing: null, selectedIds: [], form: { person_id: 1, bank: '', card_number_last4: '', credit_limit: 0, current_balance: 0, interest_rate: 0.1825, bill_day: 1, due_day: 25 } };
+        return { items: [], persons: [], cardBills: {}, viewingCard: null, showModal: false, editing: null, form: { person_id: 1, bank: '', card_number_last4: '', credit_limit: 0, interest_rate: 0.1825, bill_day: 1, due_day: 25 }, billEditModal: { show: false, billId: null, cardId: null, bill_month: '' }, billForm: { bill_amount: 0, paid_amount: 0, interest: 0, fee: 0, note: '' } };
     },
     async mounted() { await this.load(); },
     methods: {
         fmt,
+        billStatusLabel(s) { const m = { unpaid: '未还', partial: '部分还', paid: '已还清', overdue: '逾期' }; return m[s] || s; },
         async load() {
             try { this.persons = await api('/persons/'); } catch(e) {}
             try { this.items = await api('/credit-cards/'); } catch(e) {}
             if (this.persons.length) this.form.person_id = this.persons[0].id;
         },
-        openCreate() { this.editing = null; this.form = { person_id: this.persons[0]?.id || 1, bank: '', card_number_last4: '', credit_limit: 0, current_balance: 0, interest_rate: 0.1825, bill_day: 1, due_day: 25 }; this.showModal = true; },
-        openEdit(c) { this.editing = c; this.form = { person_id: c.person_id, bank: c.bank, card_number_last4: c.card_number_last4, credit_limit: c.credit_limit, current_balance: c.current_balance, interest_rate: c.interest_rate || 0.1825, bill_day: c.bill_day, due_day: c.due_day }; this.showModal = true; },
+        async toggleBills(c) {
+            if (this.viewingCard === c.id) { this.viewingCard = null; return; }
+            this.viewingCard = c.id;
+            if (!this.cardBills[c.id]) {
+                try { this.cardBills[c.id] = await api('/credit-card-bills/?card_id=' + c.id); } catch(e) {}
+            }
+        },
+        async payFull(billId) {
+            try { await api('/credit-card-bills/' + billId + '/pay-full', { method: 'POST' }); this.showToast('已标记全额还款'); await this.refreshBills(); } catch(e) { this.showToast(e.message, 'error'); }
+        },
+        async payMinimum(billId) {
+            try { await api('/credit-card-bills/' + billId + '/pay-minimum', { method: 'POST' }); this.showToast('已标记最低还款'); await this.refreshBills(); } catch(e) { this.showToast(e.message, 'error'); }
+        },
+        openBillEdit(b) {
+            this.billEditModal = { show: true, billId: b.id, cardId: b.card_id, bill_month: b.bill_month };
+            this.billForm = { bill_amount: b.bill_amount, paid_amount: b.paid_amount, interest: b.interest, fee: b.fee, note: b.note || '' };
+        },
+        async saveBill() {
+            try {
+                await api('/credit-card-bills/' + this.billEditModal.billId, { method: 'PATCH', body: JSON.stringify(this.billForm) });
+                this.showToast('账单已保存'); this.billEditModal.show = false;
+                await this.refreshBills();
+            } catch(e) { this.showToast(e.message, 'error'); }
+        },
+        async refreshBills() {
+            const cid = this.viewingCard || this.billEditModal.cardId;
+            if (cid) try { this.cardBills[cid] = await api('/credit-card-bills/?card_id=' + cid); } catch(e) {}
+        },
+        openCreate() { this.editing = null; this.form = { person_id: this.persons[0]?.id || 1, bank: '', card_number_last4: '', credit_limit: 0, interest_rate: 0.1825, bill_day: 1, due_day: 25 }; this.showModal = true; },
+        openEdit(c) { this.editing = c; this.form = { person_id: c.person_id, bank: c.bank, card_number_last4: c.card_number_last4, credit_limit: c.credit_limit, interest_rate: c.interest_rate || 0.1825, bill_day: c.bill_day, due_day: c.due_day }; this.showModal = true; },
         async create() {
             if (!this.form.bank || !this.form.card_number_last4) return this.showToast('请填写银行和卡号', 'error');
             try { await api('/credit-cards/', { method: 'POST', body: JSON.stringify(this.form) }); this.showToast('信用卡已添加'); this.showModal = false; await this.load(); } catch(e) { this.showToast(e.message, 'error'); }
         },
         async update() {
             try {
-                await api('/credit-cards/' + this.editing.id, { method: 'PATCH', body: JSON.stringify({ credit_limit: this.form.credit_limit, current_balance: this.form.current_balance, interest_rate: this.form.interest_rate, bill_day: this.form.bill_day, due_day: this.form.due_day }) });
+                await api('/credit-cards/' + this.editing.id, { method: 'PATCH', body: JSON.stringify({ credit_limit: this.form.credit_limit, interest_rate: this.form.interest_rate, bill_day: this.form.bill_day, due_day: this.form.due_day }) });
                 this.showToast('已更新'); this.showModal = false; await this.load();
             } catch(e) { this.showToast(e.message, 'error'); }
         },

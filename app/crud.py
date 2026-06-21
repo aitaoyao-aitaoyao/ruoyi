@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User, Article, Category, Tag, Media, Role, Permission
 from app.models import Person, LoanPlatform, Loan, RepaymentPlan, PosSwipe, CreditCard
-from app.models import CreditCardTransaction, CardInstallment, Mortgage, Income, Expense, FeeConfig, DebtSnapshot, DeletedRecord, CashRecord
+from app.models import CreditCardTransaction, CardInstallment, Mortgage, Income, Expense, FeeConfig, DebtSnapshot, DeletedRecord, CashRecord, CreditCardBill
 from app import schemas
 from app.auth import hash_password
 from app.finance.calc_engine import calc_installment_annual_rate
@@ -947,6 +947,46 @@ def get_cash_records(db: Session, limit: int = 24) -> list[CashRecord]:
 
 def get_latest_cash(db: Session) -> Optional[CashRecord]:
     return db.query(CashRecord).order_by(CashRecord.recorded_at.desc(), CashRecord.id.desc()).first()
+
+
+# --- Credit Card Bill ---
+def create_credit_card_bill(db: Session, data: schemas.CreditCardBillCreate) -> CreditCardBill:
+    bill = CreditCardBill(**data.model_dump())
+    db.add(bill)
+    db.commit()
+    db.refresh(bill)
+    return bill
+
+
+def get_credit_card_bills(db: Session, card_id: int) -> list[CreditCardBill]:
+    return db.query(CreditCardBill).filter(CreditCardBill.card_id == card_id).order_by(CreditCardBill.bill_month.desc()).all()
+
+
+def get_credit_card_bill(db: Session, bill_id: int) -> Optional[CreditCardBill]:
+    return db.query(CreditCardBill).filter(CreditCardBill.id == bill_id).first()
+
+
+def get_latest_bill_for_card(db: Session, card_id: int) -> Optional[CreditCardBill]:
+    return db.query(CreditCardBill).filter(CreditCardBill.card_id == card_id).order_by(CreditCardBill.bill_month.desc()).first()
+
+
+def update_credit_card_bill(db: Session, bill_id: int, data: schemas.CreditCardBillUpdate) -> Optional[CreditCardBill]:
+    bill = db.query(CreditCardBill).filter(CreditCardBill.id == bill_id).first()
+    if bill:
+        for key, val in data.model_dump(exclude_unset=True).items():
+            setattr(bill, key, val)
+        db.commit()
+        db.refresh(bill)
+    return bill
+
+
+def delete_credit_card_bill(db: Session, bill_id: int) -> bool:
+    bill = db.query(CreditCardBill).filter(CreditCardBill.id == bill_id).first()
+    if bill:
+        db.delete(bill)
+        db.commit()
+        return True
+    return False
 
 
 # --- Expense ---

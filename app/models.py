@@ -275,6 +275,27 @@ class CreditCardTransaction(Base):
     card = relationship("CreditCard", back_populates="transactions")
 
 
+class CreditCardBill(Base):
+    """信用卡月度账单"""
+    __tablename__ = "credit_card_bills"
+    id = Column(Integer, primary_key=True, index=True)
+    card_id = Column(Integer, ForeignKey("credit_cards.id"), nullable=False)
+    bill_month = Column(String(7), nullable=False)
+    bill_start = Column(Date, nullable=False)
+    bill_end = Column(Date, nullable=False)
+    due_date = Column(Date, nullable=False)
+    bill_amount = Column(Float, default=0)
+    paid_amount = Column(Float, default=0)
+    min_payment = Column(Float, default=0)
+    interest = Column(Float, default=0)
+    fee = Column(Float, default=0)
+    status = Column(String(20), default="unpaid")
+    note = Column(String(200), default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    card = relationship("CreditCard", backref="bills")
+
+
 class CardInstallment(Base):
     __tablename__ = "card_installments"
     id = Column(Integer, primary_key=True, index=True)
