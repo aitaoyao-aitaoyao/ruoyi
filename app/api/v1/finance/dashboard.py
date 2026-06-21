@@ -76,9 +76,10 @@ def get_dashboard(db: Session = Depends(get_db), user: User = Depends(get_curren
 def get_overdue_repayments(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """获取逾期未还的还款计划"""
     today = date.today()
-    items = db.query(RepaymentPlan).filter(
+    items = db.query(RepaymentPlan).join(Loan).filter(
         RepaymentPlan.status == "pending",
         RepaymentPlan.due_date < today,
+        RepaymentPlan.period_no > Loan._paid_periods,  # 只显示真正逾期的，已还期数范围内不显示
     ).order_by(RepaymentPlan.due_date).all()
 
     result = []
