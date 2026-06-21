@@ -2351,11 +2351,16 @@ const App = {
                 { path: '/finance/recycle-bin', label: '回收站', icon: '🗑️', hash: '#/finance/recycle-bin' },
                 { path: '/finance/simulator', label: '债务模拟器', icon: '🔬', hash: '#/finance/simulator' },
                 { path: '/finance/settings', label: '设置', icon: '⚙️', hash: '#/finance/settings' },
+                { path: '/static/finance-help.html', label: '功能介绍', icon: '❓', hash: '/static/finance-help.html', external: true },
             ],
         };
     },
     methods: {
         navigate(path) {
+            if ((this.navItems.find(i => i.path === path) || {}).external) {
+                window.location.href = path;
+                return;
+            }
             this.currentPath = path;
             router.push(path);
         },
