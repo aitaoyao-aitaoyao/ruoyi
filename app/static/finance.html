@@ -135,23 +135,36 @@
         th[title] { cursor: pointer; }
 
         /* ===== 移动端导航栏 ===== */
+        .mobile-header { display: none; }
         .mobile-nav { display: none; }
         /* ===== 移动端适配 (≤768px) ===== */
         @media (max-width: 768px) {
-            body { display: block; padding-bottom: 56px; }
+            body { display: block; padding-bottom: 56px; padding-top: 36px; }
             .sidebar { display: none; }
+            .mobile-header {
+                display: flex; align-items: center; justify-content: center;
+                position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+                background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+                height: 36px; font-size: 14px; font-weight: bold; color: var(--red);
+            }
             .main { margin-left: 0 !important; padding: 8px; padding-bottom: 60px; min-height: auto; }
             .mobile-nav {
-                display: flex; justify-content: space-around; align-items: center;
+                display: flex; align-items: center; gap: 0;
                 position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
                 background: var(--bg-secondary); border-top: 1px solid var(--border);
-                padding: 6px 0 env(safe-area-inset-bottom);
-                height: 50px;
+                padding: 4px 4px env(safe-area-inset-bottom);
+                height: 52px; overflow-x: auto; overflow-y: hidden;
+                white-space: nowrap; -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
             }
+            .mobile-nav::-webkit-scrollbar { display: none; }
             .mobile-nav a {
-                color: var(--text-secondary); font-size: 20px; text-decoration: none;
-                padding: 4px 10px; text-align: center; transition: color 0.2s;
+                color: var(--text-secondary); font-size: 16px; text-decoration: none;
+                padding: 2px 10px; text-align: center; transition: color 0.2s;
+                display: flex; flex-direction: column; align-items: center;
+                min-width: 44px; flex-shrink: 0;
             }
+            .mobile-nav a span { font-size: 9px; margin-top: 1px; }
             .mobile-nav a:hover, .mobile-nav a:active { color: var(--red); }
             .stat-cards { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
             .stat-card { padding: 10px 12px; }
@@ -170,7 +183,7 @@
             .btn { padding: 6px 12px; font-size: 11px; }
             .btn-xs { padding: 2px 6px; font-size: 9px; }
             .pagination { font-size: 11px; gap: 4px; }
-            .toast { top: auto; bottom: 20px; right: 10px; left: 10px; text-align: center; }
+            .toast { top: 40px; bottom: auto; right: 10px; left: 10px; text-align: center; }
         }
 
         /* ===== 小屏手机 (≤480px) ===== */
@@ -186,6 +199,7 @@
 </head>
 <body>
     <div id="app">
+        <div class="mobile-header">财智管家</div>
         <nav class="sidebar" v-if="currentPath !== '/finance/login'">
             <div class="logo">财智管家</div>
             <a v-for="item in navItems" :key="item.path" class="nav-item" :class="{ active: currentPath === item.path }"
@@ -203,11 +217,15 @@
         </main>
         <div v-if="toast.show" class="toast" :class="toast.type">{{ toast.message }}</div>
         <nav class="mobile-nav">
-            <a href="#/finance/dashboard">📊</a>
-            <a href="#/finance/pos">💳</a>
-            <a href="#/finance/reports">📈</a>
-            <a href="#/finance/loans">💰</a>
-            <a href="#/finance/settings">⚙️</a>
+            <a href="#/finance/dashboard" title="仪表盘">📊<span>总览</span></a>
+            <a href="#/finance/pos" title="POS刷卡">💳<span>POS</span></a>
+            <a href="#/finance/loans" title="借贷">💰<span>借贷</span></a>
+            <a href="#/finance/credit-cards" title="信用卡">🏦<span>卡</span></a>
+            <a href="#/finance/installments" title="分期">📋<span>分期</span></a>
+            <a href="#/finance/mortgages" title="房贷">🏠<span>房贷</span></a>
+            <a href="#/finance/reports" title="统计">📈<span>统计</span></a>
+            <a href="#/finance/simulator" title="模拟">🔬<span>模拟</span></a>
+            <a href="#/finance/settings" title="设置">⚙️<span>设置</span></a>
         </nav>
     </div>
     <script src="/static/finance-app.js"></script>
