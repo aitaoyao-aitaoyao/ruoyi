@@ -618,6 +618,7 @@ const LoansPage = {
             <div class="form-row">
                 <div class="form-group"><label>还款方式</label><select v-model="form.repay_method" @change="onRepayMethodChange"><option value="equal_installment">等额本息</option><option value="interest_first">先息后本</option><option value="bullet">到期还本付息</option><option value="flexible">无固定期限（个人借贷）</option></select></div>
                 <div class="form-group"><label>总期数</label><input v-model.number="form.periods" type="number" min="0" placeholder="0 表示无固定期数"></div>
+                <div class="form-group"><label>每月还款日</label><input v-model.number="form.repay_day" type="number" min="1" max="28" placeholder="留空为开始日"></div>
             </div>
             <div class="form-row">
                 <div class="form-group"><label>已还期数</label><input v-model.number="form.paid_periods" type="number" min="0" placeholder="0"></div>
@@ -686,7 +687,7 @@ const LoansPage = {
                 person_id: this.persons[0]?.id || 1, platform_id: this.platforms[0]?.id || 1,
                 amount: 0, rate: 0, rate_type: 'monthly', total_interest: null,
                 repay_method: 'equal_installment', periods: 12, paid_periods: 0,
-                start_date: todayStr(), end_date: null, note: ''
+                repay_day: null, start_date: todayStr(), end_date: null, note: ''
             };
             this.showModal = true;
         },
@@ -703,7 +704,7 @@ const LoansPage = {
                 rate_type: l.rate_type,
                 total_interest: l.rate_type === 'total_interest' ? l.rate : null,
                 repay_method: l.repay_method, periods: l.periods, paid_periods: Math.max(l.paid_periods || 0, autoPaid),
-                start_date: l.start_date, end_date: l.end_date, note: l.note || ''
+                repay_day: l.repay_day, start_date: l.start_date, end_date: l.end_date, note: l.note || ''
             };
             this.showModal = true;
         },

@@ -185,6 +185,7 @@ class Loan(Base):
     note = Column(String(200), default="")
     created_at = Column(DateTime, default=datetime.utcnow)
     _paid_periods = Column("paid_periods", Integer, default=0)
+    repay_day = Column(Integer, nullable=True)
 
     person = relationship("Person")
     platform = relationship("LoanPlatform")

@@ -42,6 +42,21 @@ try:
 except Exception:
     pass
 
+try:
+    _conn = sqlite3.connect("app.db")
+    _conn.execute("ALTER TABLE loans ADD COLUMN repay_day INTEGER")
+    _conn.commit()
+    _conn.close()
+except Exception:
+    pass
+try:
+    _conn = sqlite3.connect("app.db")
+    _conn.execute("UPDATE loans SET repay_day = (SELECT CAST(substr(due_date,9,2) AS INTEGER) FROM repayment_plans WHERE loan_id=loans.id LIMIT 1) WHERE repay_day IS NULL")
+    _conn.commit()
+    _conn.close()
+except Exception:
+    pass
+
 # 确保默认管理员用户存在（用于首次登录）
 def _ensure_admin_user():
     db = SessionLocal()

@@ -296,6 +296,7 @@ class LoanCreate(BaseModel):
     end_date: Optional[date] = None
     periods: int
     paid_periods: int = 0
+    repay_day: Optional[int] = None
     note: str = ""
 
     @field_validator("rate_type")
@@ -334,6 +335,7 @@ class LoanRead(BaseModel):
     periods: int
     paid_periods: int = 0
     remaining_periods: int = 0
+    repay_day: Optional[int] = None
     status: str
     note: str
     created_at: datetime
@@ -353,6 +355,7 @@ class LoanUpdate(BaseModel):
     end_date: Optional[date] = None
     periods: Optional[int] = None
     paid_periods: Optional[int] = None
+    repay_day: Optional[int] = None
     status: Optional[str] = None
     note: Optional[str] = None
 
