@@ -103,27 +103,28 @@ def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_
     cutoff = today + timedelta(days=7)
     reminders = []
 
-    # 每笔活跃贷款取最早的待还计划作为提醒
-    active_loan_ids = db.query(Loan.id).filter(Loan.status == "active").subquery()
     rps = db.query(RepaymentPlan).filter(
         RepaymentPlan.status == "pending",
-        RepaymentPlan.loan_id.in_(active_loan_ids),
         RepaymentPlan.due_date >= today,
+        RepaymentPlan.due_date <= cutoff,
     ).order_by(RepaymentPlan.due_date).all()
 
-    # 每组(平台+人员)只取最早到期的一条
     loan_map = {}
     for rp in rps:
         platform_name = rp.loan.platform.name if rp.loan and rp.loan.platform else ""
         key = f"{platform_name}_{rp.person_id}"
-        if key not in loan_map or rp.due_date < loan_map[key]["due_date"]:
+        if key not in loan_map:
             loan_map[key] = {
                 "name": f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}",
                 "person_name": rp.person.name if rp.person else "",
                 "due_date": rp.due_date,
-                "amount": rp.total_amount,
-                "days_left": (rp.due_date - today).days,
+                "amount": 0,
+                "days_left": 999,
             }
+        d = loan_map[key]
+        d["amount"] += rp.total_amount
+        d["due_date"] = min(d["due_date"], rp.due_date)
+        d["days_left"] = min(d["days_left"], (rp.due_date - today).days)
     for d in loan_map.values():
         reminders.append(schemas.RepayReminderItem(
             type="loan", name=d["name"], person_name=d["person_name"],
