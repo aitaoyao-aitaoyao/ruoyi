@@ -226,6 +226,7 @@ const DashboardPage = {
         <div class="stat-card"><div class="label">总资产</div><div class="value green">{{ fmt(dash.total_assets) }}</div></div>
         <div class="stat-card" style="cursor:pointer" @click="showInterestDetail"><div class="label">本月应付利息</div><div class="value yellow">{{ fmt(dash.monthly_interest) }}</div></div>
         <div class="stat-card"><div class="label">本月 POS 手续费</div><div class="value blue">{{ fmt(dash.monthly_pos_fee) }}</div></div>
+        <div class="stat-card"><div class="label">净资产</div><div class="value" :style="{ color: netWorth >= 0 ? 'var(--green)' : 'var(--red)' }">{{ fmt(netWorth) }}</div></div>
     </div>
     <div class="section-title">风险指标</div>
     <div class="stat-cards" v-if="v2.metrics && Object.keys(v2.metrics).length">
@@ -315,6 +316,13 @@ const DashboardPage = {
         try { this.v2 = await api('/v2/dashboard'); } catch(e) {}
         try { const riskData = await api('/v2/risk-assessment'); this.v2.risk = riskData; } catch(e) {}
         this.$nextTick(() => { this.renderPie(); this.renderTrend(); this.renderGap(); });
+    },
+    computed: {
+        netWorth() {
+            const cash = (this.v2 && this.v2.inputs && this.v2.inputs.cash_on_hand) || 0;
+            const debt = (this.dash && this.dash.total_debt) || 0;
+            return cash - debt;
+        }
     },
     methods: {
         fmt, fmtDate, daysLeft,
@@ -1976,6 +1984,19 @@ const SettingsPage = {
         </div>
     </div>
     <div class="section-card">
+        <h3 style="margin:0 0 12px 0">月度预算</h3>
+        <div class="form-row" style="gap:8px;align-items:flex-end">
+            <div class="form-group" style="margin:0;flex:1">
+                <label>月预算金额</label>
+                <input v-model.number="budgetForm.amount" type="number" min="0" step="100" placeholder="0">
+            </div>
+            <button class="btn btn-primary" @click="saveBudget" style="margin-bottom:12px">保存预算</button>
+        </div>
+        <div v-if="budgetAmount > 0" style="margin-top:8px;font-size:12px;color:var(--blue)">
+            当前月预算: ¥{{ fmt(budgetAmount) }}
+        </div>
+    </div>
+    <div class="section-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <h3 style="margin:0">数据管理</h3>
             <button class="btn btn-danger btn-sm" @click="clearAllData">清空所有财务数据</button>
@@ -1999,14 +2020,19 @@ const SettingsPage = {
         </table>
     </div>
 </div>`,
-    data() { return { feeConfigs: [], feeForm: { fee_type: 'pos_swipe', rate: 0.006, description: '' }, cashForm: { amount: 0, note: '' }, latestCash: null, cashHistory: [] }; },
+    data() { return { feeConfigs: [], feeForm: { fee_type: 'pos_swipe', rate: 0.006, description: '' }, cashForm: { amount: 0, note: '' }, latestCash: null, cashHistory: [], budgetForm: { amount: '' }, budgetAmount: 0 }; },
     async mounted() {
         try { this.feeConfigs = await api('/fee-configs/'); } catch(e) {}
         try { this.latestCash = await api('/settings/cash/latest'); } catch(e) {}
         try { this.cashHistory = await api('/settings/cash/history?limit=12'); } catch(e) {}
+        try { const b = await api('/settings/app/budget'); this.budgetAmount = parseFloat(b.value) || 0; } catch(e) {}
     },
     methods: {
         fmt,
+        async saveBudget() {
+            if (!this.budgetForm.amount && this.budgetForm.amount !== 0) return this.showToast('请输入预算金额', 'error');
+            try { await api('/settings/app', { method: 'POST', body: JSON.stringify({ key: 'budget', value: String(this.budgetForm.amount) }) }); this.budgetAmount = this.budgetForm.amount; this.showToast('预算已保存'); } catch(e) { this.showToast(e.message, 'error'); }
+        },
         async addCash() {
             if (!this.cashForm.amount) return this.showToast('请输入金额', 'error');
             try { await api('/settings/cash', { method: 'POST', body: JSON.stringify(this.cashForm) }); this.showToast('现金余额已更新'); this.cashForm.note = ''; this.latestCash = await api('/settings/cash/latest'); this.cashHistory = await api('/settings/cash/history?limit=12'); } catch(e) { this.showToast(e.message, 'error'); }

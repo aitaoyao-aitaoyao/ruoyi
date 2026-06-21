@@ -403,6 +403,14 @@ class DeletedRecord(Base):
     deleted_at = Column(DateTime, default=datetime.utcnow)
 
 
+class AppSetting(Base):
+    """应用设置键值表"""
+    __tablename__ = "app_settings"
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(50), unique=True, nullable=False)
+    value = Column(String(500), default="")
+
+
 class CashRecord(Base):
     """手头现金记录：用户手动录入的现金余额，支持历史追踪。"""
     __tablename__ = "cash_records"

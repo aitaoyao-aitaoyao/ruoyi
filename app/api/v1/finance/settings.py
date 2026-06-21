@@ -1,14 +1,37 @@
-"""设置接口 — 手头现金管理"""
+"""设置接口 — 手头现金管理 + 应用设置"""
 from datetime import date
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from app.db import get_db
 from app.auth import get_current_user
-from app.models import User
+from app.models import User, AppSetting
 from app import crud, schemas
 
 router = APIRouter(prefix="/finance/settings", tags=["finance-settings"])
 
+
+class SettingSet(BaseModel):
+    key: str
+    value: str
+
+
+@router.get("/app/{key}")
+def get_app_setting(key: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    s = db.query(AppSetting).filter(AppSetting.key == key).first()
+    return {"key": key, "value": s.value if s else ""}
+
+
+@router.post("/app")
+def set_app_setting(data: SettingSet, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    s = db.query(AppSetting).filter(AppSetting.key == data.key).first()
+    if s:
+        s.value = data.value
+    else:
+        s = AppSetting(key=data.key, value=data.value)
+        db.add(s)
+    db.commit()
+    return {"key": data.key, "value": data.value}
 
 @router.post("/cash", response_model=schemas.CashRecordRead)
 def add_cash(data: schemas.CashRecordCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
