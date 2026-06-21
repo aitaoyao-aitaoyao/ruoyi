@@ -203,7 +203,7 @@ class Loan(Base):
 
     @property
     def remaining_periods(self):
-        return self.periods - self.paid_periods
+        return max(0, self.periods - self.paid_periods)
 
 
 class RepaymentPlan(Base):
@@ -320,7 +320,7 @@ class CardInstallment(Base):
 
     @property
     def remaining_periods(self):
-        return self.periods - self.paid_periods
+        return max(0, self.periods - self.paid_periods)
 
 
 class Mortgage(Base):

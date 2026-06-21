@@ -580,7 +580,7 @@ const LoansPage = {
     </div>
     <button class="btn btn-primary" @click="openCreate" style="margin-bottom:12px">+ 新增借款</button>
     <button class="btn btn-danger btn-sm" @click="batchDelete(id => api('/loans/' + id, { method: 'DELETE' }))" style="margin-bottom:12px;margin-left:8px">批量删除</button>
-    <table class="data-table"><thead><tr><th style="width:30px"><input type="checkbox" @change="toggleSelectAll"></th><th>ID</th><th>人员</th><th>平台</th><th>金额</th><th>利率</th><th>方式</th><th>总期数</th><th>已还</th><th>剩余</th><th>状态</th><th>操作</th></tr></thead>
+    <table class="data-table"><thead><tr><th style="width:30px"><input type="checkbox" @change="toggleSelectAll"></th><th>ID</th><th>人员</th><th>平台</th><th>金额</th><th>利率</th><th>方式</th><th>总期数</th><th>已还</th><th>剩余</th><th>还款日</th><th>状态</th><th>操作</th></tr></thead>
         <tbody><tr v-for="l in filteredLoans" :key="l.id">
             <td><input type="checkbox" :checked="selectedIds.includes(l.id)" @change="toggleSelect(l.id)"></td>
             <td>{{ l.id }}</td><td>{{ l.person?.name || '-' }}</td><td>{{ l.platform?.name || '-' }}</td>
@@ -588,7 +588,7 @@ const LoansPage = {
             <td><span class="tag blue">{{ repayMethodLabel(l.repay_method) }}</span></td>
             <td>{{ l.periods }}</td>
             <td>{{ l.paid_periods || 0 }}</td>
-            <td :style="{ color: (l.remaining_periods || 0) > 0 ? 'var(--yellow)' : 'var(--green)' }">{{ l.remaining_periods || 0 }}</td>
+            <td :style="{ color: (l.Math.max(0, remaining_periods || 0)) > 0 ? 'var(--yellow)' : 'var(--green)' }">{{ l.Math.max(0, remaining_periods || 0) }}</td>
             <td><span :class="'tag ' + (l.status === 'active' ? 'green' : 'red')">{{ l.status === 'active' ? '还款中' : '已结清' }}</span></td>
             <td>
                 <button class="btn btn-secondary btn-xs" @click="openEdit(l)" style="margin-right:4px">编辑</button>
@@ -1130,8 +1130,8 @@ const InstallmentsPage = {
             <td>¥{{ fmt(i.amount) }}</td><td>{{ i.periods }}</td><td>{{ (i.period_rate * 100).toFixed(2) }}%</td>
             <td><span class="tag yellow">{{ i.annual_rate ? (i.annual_rate * 100).toFixed(2) + '%' : '-' }}</span></td>
             <td>¥{{ fmt(i.period_total) }}</td><td>{{ i.paid_periods }}</td>
-            <td :style="{ color: (i.remaining_periods || 0) > 0 ? 'var(--yellow)' : 'var(--green)' }">{{ i.remaining_periods || 0 }}</td>
-            <td :style="{ color: 'var(--red)' }">¥{{ fmt((i.remaining_periods || 0) * i.period_total) }}</td>
+            <td :style="{ color: (i.Math.max(0, remaining_periods || 0)) > 0 ? 'var(--yellow)' : 'var(--green)' }">{{ i.Math.max(0, remaining_periods || 0) }}</td>
+            <td :style="{ color: 'var(--red)' }">¥{{ fmt((i.Math.max(0, remaining_periods || 0)) * i.period_total) }}</td>
             <td><button class="btn btn-secondary btn-xs" @click="openEdit(i)" style="margin-right:4px">编辑</button><button class="btn btn-secondary btn-xs" @click="payPeriod(i)" style="margin-right:4px">还一期</button><button class="btn btn-danger btn-xs" @click="remove(i.id)">删除</button></td>
         </tr></tbody>
     </table>
