@@ -227,6 +227,7 @@ const DashboardPage = {
         <div class="stat-card" style="cursor:pointer" @click="showInterestDetail"><div class="label">本月应付利息</div><div class="value yellow">{{ fmt(dash.monthly_interest) }}</div></div>
         <div class="stat-card"><div class="label">本月 POS 手续费</div><div class="value blue">{{ fmt(dash.monthly_pos_fee) }}</div></div>
         <div class="stat-card"><div class="label">净资产</div><div class="value" :style="{ color: netWorth >= 0 ? 'var(--green)' : 'var(--red)' }">{{ fmt(netWorth) }}</div></div>
+        <div class="stat-card"><div class="label">月预算执行率</div><div class="value" :style="{ color: budgetRate > 100 ? 'var(--red)' : 'var(--green)' }">{{ budgetRate > 0 ? budgetRate + '%' : '-' }}</div></div>
     </div>
     <div class="section-title">风险指标</div>
     <div class="stat-cards" v-if="v2.metrics && Object.keys(v2.metrics).length">
@@ -309,6 +310,7 @@ const DashboardPage = {
             dash: {}, reminders: [], snapshots: [], cashHistory: [],
             showInterestModal: false,
             interestDetail: { total: 0, period: '', items: [] },
+            monthlyBudget: 0,
             v2: { period: '', inputs: {}, metrics: {} },
         };
     },
@@ -319,6 +321,7 @@ const DashboardPage = {
         try { this.v2 = await api('/v2/dashboard'); } catch(e) {}
         try { const riskData = await api('/v2/risk-assessment'); this.v2.risk = riskData; } catch(e) {}
         try { this.cashHistory = await api('/settings/cash/history?limit=12'); } catch(e) {}
+        try { const b = await api('/settings/app/budget'); this.monthlyBudget = parseFloat(b.value) || 0; } catch(e) {}
         this.$nextTick(() => { this.renderPie(); this.renderTrend(); this.renderGap(); this.renderNetWorth(); });
     },
     computed: {
@@ -326,6 +329,11 @@ const DashboardPage = {
             const cash = (this.v2 && this.v2.inputs && this.v2.inputs.cash_on_hand) || 0;
             const debt = (this.dash && this.dash.total_debt) || 0;
             return cash - debt;
+        },
+        budgetRate() {
+            if (!this.monthlyBudget) return 0;
+            const expense = (this.v2 && this.v2.inputs && this.v2.inputs.monthly_expense) || 0;
+            return Math.round(expense / this.monthlyBudget * 100);
         }
     },
     methods: {
@@ -767,7 +775,9 @@ const PosPage = {
     <table class="data-table"><thead><tr><th style="width:30px"><input type="checkbox" @change="toggleSelectAll"></th><th>ID</th><th>人员</th><th>金额</th><th>费率</th><th>手续费</th><th>银行卡</th><th>POS机</th><th>刷卡时间</th><th>操作</th></tr></thead>
         <tbody><tr v-for="s in items" :key="s.id">
             <td><input type="checkbox" :checked="selectedIds.includes(s.id)" @change="toggleSelect(s.id)"></td>
-            <td>{{ s.id }}</td><td>{{ s.person?.name || '-' }}</td><td>¥{{ fmt(s.amount) }}</td><td>{{ (s.fee_rate * 10000).toFixed(1) }}元/万</td><td>¥{{ fmt(s.fee) }}</td>
+            <td>{{ s.id }}</td><td>{{ s.person?.name || '-' }}</td>
+            <td :style="{ color: s.amount < 0 ? 'var(--green)' : '' }">¥{{ fmt(Math.abs(s.amount)) }}</td>
+            <td>{{ s.amount < 0 ? '-' : (s.fee_rate * 10000).toFixed(1) + '元/万' }}</td><td>¥{{ fmt(s.fee) }}</td>
             <td>{{ s.bank_card }}</td><td>{{ s.pos_machine }}</td><td>{{ fmtDate(s.swipe_date) }}</td>
             <td><button class="btn btn-secondary btn-xs" @click="openEdit(s)" style="margin-right:4px">编辑</button><button class="btn btn-danger btn-xs" @click="remove(s.id)">删除</button></td>
         </tr></tbody>
@@ -777,8 +787,11 @@ const PosPage = {
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
         <div class="modal"><h3>{{ editing ? '编辑' : '新增' }}刷卡记录</h3>
             <div class="form-group"><label>人员</label><select v-model="form.person_id"><option v-for="p in persons" :key="p.id" :value="p.id">{{ p.name }}</option></select></div>
-            <div class="form-group"><label>刷卡金额</label><input v-model.number="form.amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
-            <div class="form-group"><label>费率 (留空使用默认 60元/万)</label><input v-model.number="form.fee_rate" type="number" step="0.0001" placeholder="0.006 = 60元/万"></div>
+            <div class="form-row" style="align-items:flex-end">
+                <div class="form-group"><label>刷卡金额</label><input v-model.number="form.amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+                <div class="form-group" style="margin-bottom:12px"><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" v-model="form.is_refund" style="width:auto"> 退款</label></div>
+            </div>
+            <div class="form-group" v-if="!form.is_refund"><label>费率 (留空使用默认 60元/万)</label><input v-model.number="form.fee_rate" type="number" step="0.0001" placeholder="0.006 = 60元/万"></div>
             <div class="form-row">
                 <div class="form-group"><label>银行卡（关联信用卡额度）</label><select v-model="form.card_id" @change="onCardSelect"><option :value="null">-- 请选择 --</option><option v-for="c in cards" :key="c.id" :value="c.id">{{ c.bank }} 尾号{{ c.card_number_last4 }}（{{ c.person?.name || '' }} | 已用 ¥{{ fmt(c.current_balance) }}）</option></select></div>
                 <div class="form-group"><label>POS机</label><input v-model="form.pos_machine" placeholder="如：拉卡拉"></div>
@@ -815,22 +828,25 @@ const PosPage = {
         },
         openCreate() {
             this.editing = null;
-            this.form = { person_id: this.persons[0]?.id || 1, card_id: null, amount: 0, fee_rate: null, bank_card: '', pos_machine: '', swipe_date: nowStr(), note: '' };
+            this.form = { person_id: this.persons[0]?.id || 1, card_id: null, amount: 0, fee_rate: null, bank_card: '', pos_machine: '', swipe_date: nowStr(), note: '', is_refund: false };
             this.showModal = true;
         },
         openEdit(s) {
             this.editing = s;
             this.form = {
                 person_id: s.person_id, card_id: s.card_id || null,
-                amount: s.amount, fee_rate: s.fee_rate,
+                amount: Math.abs(s.amount), fee_rate: s.amount < 0 ? 0 : s.fee_rate,
                 bank_card: s.bank_card || '',
-                pos_machine: s.pos_machine, swipe_date: s.swipe_date?.replace?.(' ', 'T') || nowStr(), note: s.note || ''
+                pos_machine: s.pos_machine, swipe_date: s.swipe_date?.replace?.(' ', 'T') || nowStr(), note: s.note || '',
+                is_refund: s.amount < 0
             };
             this.showModal = true;
         },
         async submit() {
             if (!this.form.amount) return this.showToast('请输入金额', 'error');
             const body = { ...this.form };
+            if (body.is_refund) { body.amount = -Math.abs(body.amount); body.fee_rate = 0; }
+            delete body.is_refund;
             if (!body.card_id) body.card_id = null;
             if (body.fee_rate === '' || body.fee_rate === null || body.fee_rate === undefined) delete body.fee_rate;
             if (this.editing) {
@@ -1164,7 +1180,7 @@ const MortgagesPage = {
             <td>¥{{ fmt(m.total_amount) }}</td><td :style="{ color: 'var(--red)' }">¥{{ fmt(m.remaining_principal) }}</td>
             <td>{{ (m.rate * 100).toFixed(2) }}%</td><td>¥{{ fmt(m.monthly_payment) }}</td>
             <td><span :class="'tag ' + (m.status === 'active' ? 'green' : 'red')">{{ m.status === 'active' ? '还款中' : '已结清' }}</span></td>
-            <td><button class="btn btn-secondary btn-xs" @click="openEdit(m)" style="margin-right:4px">更新本金</button><button class="btn btn-danger btn-xs" @click="remove(m.id)">删除</button></td>
+            <td><button class="btn btn-secondary btn-xs" @click="openEdit(m)" style="margin-right:4px">更新本金</button><button class="btn btn-secondary btn-xs" @click="openPrepay(m)" style="margin-right:4px">提前还</button><button class="btn btn-danger btn-xs" @click="remove(m.id)">删除</button></td>
         </tr></tbody>
     </table>
     <div v-if="items.length === 0" class="empty-state">暂无房贷</div>
@@ -1204,12 +1220,29 @@ const MortgagesPage = {
             </template>
         </div>
     </div>
+    <!-- 提前还款计算 -->
+    <div v-if="prepayModal.show" class="modal-overlay" @click.self="prepayModal.show = false">
+        <div class="modal"><h3>提前还款计算 — {{ prepayModal.bank }} {{ prepayModal.house }}</h3>
+            <div style="font-size:12px;color:#888;margin-bottom:12px">剩余本金 ¥{{ fmt(prepayModal.principal) }} · 年利率 {{ (prepayModal.rate * 100).toFixed(2) }}% · 月供 ¥{{ fmt(prepayModal.payment) }}</div>
+            <div class="form-group"><label>提前还款金额</label><input v-model.number="prepayModal.amount" type="number" min="0" step="1000" placeholder="输入金额"></div>
+            <div v-if="prepayModal.amount > 0" style="margin-top:12px;padding:12px;background:rgba(79,172,254,0.06);border-radius:8px;font-size:12px">
+                <div>每月节省利息: <strong style="color:var(--green)">¥{{ fmt(prepayModal.amount * prepayModal.rate / 12) }}</strong></div>
+                <div>一年节省利息: <strong style="color:var(--green)">¥{{ fmt(prepayModal.amount * prepayModal.rate) }}</strong></div>
+                <div>十年节省利息: <strong style="color:var(--green)">¥{{ fmt(prepayModal.amount * prepayModal.rate * 10) }}</strong></div>
+                <div style="margin-top:8px;color:#888">剩余本金将降至: <strong style="color:var(--yellow)">¥{{ fmt(Math.max(0, prepayModal.principal - prepayModal.amount)) }}</strong></div>
+            </div>
+            <button class="btn btn-secondary" @click="prepayModal.show = false" style="margin-top:12px;width:100%">关闭</button>
+        </div>
+    </div>
 </div>`,
     data() {
-        return { items: [], persons: [], showModal: false, editing: null, editPrincipal: 0, selectedIds: [], form: { person_id: 1, bank: '', house_name: '', total_amount: 0, remaining_principal: 0, rate: 0.04, start_date: todayStr(), end_date: null, total_periods: 360, monthly_payment: 0, repay_method: 'equal_installment' } };
+        return { items: [], persons: [], showModal: false, editing: null, editPrincipal: 0, selectedIds: [], form: { person_id: 1, bank: '', house_name: '', total_amount: 0, remaining_principal: 0, rate: 0.04, start_date: todayStr(), end_date: null, total_periods: 360, monthly_payment: 0, repay_method: 'equal_installment' }, prepayModal: { show: false, bank: '', house: '', principal: 0, rate: 0, payment: 0, amount: 0 } };
     },
     async mounted() { await this.load(); },
     methods: {
+        openPrepay(m) {
+            this.prepayModal = { show: true, bank: m.bank, house: m.house_name, principal: m.remaining_principal, rate: m.rate, payment: m.monthly_payment, amount: 0 };
+        },
         fmt,
         async load() {
             try { this.persons = await api('/persons/'); } catch(e) {}
@@ -1257,7 +1290,7 @@ const IncomesPage = {
         <div class="modal"><h3>{{ editing ? '编辑' : '新增' }}收入</h3>
             <div class="form-group"><label>人员</label><select v-model="form.person_id"><option v-for="p in persons" :key="p.id" :value="p.id">{{ p.name }}</option></select></div>
             <div class="form-group"><label>金额</label><input v-model.number="form.amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
-            <div class="form-group"><label>来源</label><input v-model="form.source" placeholder="工资/兼职/投资/租金/其他"></div>
+            <div class="form-group"><label>来源</label><input v-model="form.source" list="source-list" placeholder="工资/兼职/投资/租金/其他"><datalist id="source-list"><option value="工资"><option value="兼职"><option value="投资"><option value="租金"><option value="理财"><option value="其他"></datalist></div>
             <div class="form-row">
                 <div class="form-group"><label>类型</label><select v-model="form.period_type"><option value="monthly">月度</option><option value="yearly">年度</option><option value="once">一次性</option></select></div>
                 <div class="form-group"><label>周期 (如 2025-05)</label><input v-model="form.period_value" :placeholder="todayStr().slice(0,7)"></div>
@@ -1324,7 +1357,7 @@ const ExpensesPage = {
             <div class="form-group"><label>人员</label><select v-model="form.person_id"><option v-for="p in persons" :key="p.id" :value="p.id">{{ p.name }}</option></select></div>
             <div class="form-group"><label>金额</label><input v-model.number="form.amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
             <div class="form-row">
-                <div class="form-group"><label>分类</label><select v-model="form.category"><option v-for="c in cats" :key="c" :value="c">{{ c }}</option></select></div>
+                <div class="form-group"><label>分类</label><input v-model="form.category" list="cat-list" placeholder="选择或输入自定义分类"><datalist id="cat-list"><option v-for="c in cats" :key="c" :value="c"></datalist></div>
                 <div class="form-group"><label>周期</label><input v-model="form.period_value" :placeholder="todayStr().slice(0,7)"></div>
             </div>
             <div class="form-row">
@@ -1552,6 +1585,12 @@ const ReportsPage = {
         <div class="chart-box" style="grid-column:1 / -1"><div class="title">POS刷卡次数趋势</div><div ref="posCountChart" class="chart-inner" style="height:280px"></div></div>
     </div>
 
+    <!-- 支出分类占比 -->
+    <div class="section-title">支出分类分析</div>
+    <div class="chart-row">
+        <div class="chart-box" style="grid-column:1 / -1"><div class="title">本月支出分类占比</div><div ref="expenseCatChart" class="chart-inner" style="height:280px"></div></div>
+    </div>
+
     <!-- 优先还款方案 -->
     <div class="section-title" style="display:flex;align-items:center;gap:8px">
         优先还款方案
@@ -1683,7 +1722,7 @@ const ReportsPage = {
         await this.loadPriorityPlan();
         await this.loadForecast();
         await this.loadPosCount();
-        this.$nextTick(() => { this.renderPlatform(); this.renderMonth(); this.renderForecast(); });
+        this.$nextTick(() => { this.renderPlatform(); this.renderMonth(); this.renderForecast(); this.renderExpenseCat(); });
     },
     methods: {
         fmt,
@@ -1946,6 +1985,26 @@ const ReportsPage = {
                     },
                     barWidth: this.posCountType === 'monthly' ? '60%' : '40%',
                 }],
+            });
+            window.addEventListener('resize', () => chart.resize());
+        },
+        renderExpenseCat() {
+            const el = this.$refs.expenseCatChart; if (!el) return;
+            const chart = echarts.init(el);
+            if (!this.gap || !this.gap.expense_breakdown || !this.gap.expense_breakdown.length) {
+                chart.setOption({ title: { text: '暂无数据（请先分析收支缺口）', left: 'center', top: 'center', textStyle: { color: '#888', fontSize: 13 } } });
+                return;
+            }
+            const data = this.gap.expense_breakdown;
+            const colors = ['#e94560', '#4facfe', '#f9ca24', '#00d2a0', '#ff6b6b', '#a29bfe', '#fd79a8', '#fdcb6e', '#00cec9', '#6c5ce7'];
+            chart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                series: [{
+                    type: 'pie', radius: ['40%', '70%'], center: ['50%', '55%'],
+                    data: data.map((d, i) => ({ value: d.amount, name: d.category, itemStyle: { color: colors[i % colors.length] } })),
+                    label: { color: '#888', fontSize: 11, formatter: '{b}\n{d}%' },
+                    emphasis: { label: { fontSize: 14, fontWeight: 'bold' } }
+                }]
             });
             window.addEventListener('resize', () => chart.resize());
         }
