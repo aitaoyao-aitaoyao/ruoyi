@@ -133,6 +133,55 @@
         }
         .tooltip-card:hover .tooltip-text { visibility: visible; opacity: 1; }
         th[title] { cursor: pointer; }
+
+        /* ===== 移动端导航栏 ===== */
+        .mobile-nav { display: none; }
+        /* ===== 移动端适配 (≤768px) ===== */
+        @media (max-width: 768px) {
+            body { display: block; padding-bottom: 56px; }
+            .sidebar { display: none; }
+            .main { margin-left: 0 !important; padding: 8px; padding-bottom: 60px; min-height: auto; }
+            .mobile-nav {
+                display: flex; justify-content: space-around; align-items: center;
+                position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+                background: var(--bg-secondary); border-top: 1px solid var(--border);
+                padding: 6px 0 env(safe-area-inset-bottom);
+                height: 50px;
+            }
+            .mobile-nav a {
+                color: var(--text-secondary); font-size: 20px; text-decoration: none;
+                padding: 4px 10px; text-align: center; transition: color 0.2s;
+            }
+            .mobile-nav a:hover, .mobile-nav a:active { color: var(--red); }
+            .stat-cards { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
+            .stat-card { padding: 10px 12px; }
+            .stat-card .value { font-size: 18px !important; }
+            .chart-row { grid-template-columns: 1fr !important; }
+            .chart-inner { height: 220px !important; }
+            table.data-table { font-size: 10px; display: block; overflow-x: auto; white-space: nowrap; }
+            table.data-table th, table.data-table td { padding: 6px 8px; }
+            .modal { width: 100vw !important; max-width: 100vw; border-radius: 12px 12px 0 0; margin: 0; position: fixed; bottom: 0; left: 0; max-height: 85vh; }
+            .modal-overlay { align-items: flex-end; }
+            .form-row { grid-template-columns: 1fr !important; }
+            .page-header h2 { font-size: 16px; }
+            .filter-bar { gap: 4px; }
+            .filter-chip { padding: 3px 8px; font-size: 10px; }
+            .section-card { padding: 12px; }
+            .btn { padding: 6px 12px; font-size: 11px; }
+            .btn-xs { padding: 2px 6px; font-size: 9px; }
+            .pagination { font-size: 11px; gap: 4px; }
+            .toast { top: auto; bottom: 20px; right: 10px; left: 10px; text-align: center; }
+        }
+
+        /* ===== 小屏手机 (≤480px) ===== */
+        @media (max-width: 480px) {
+            .stat-cards { grid-template-columns: repeat(2, 1fr) !important; gap: 6px; }
+            .stat-card { padding: 8px 10px; }
+            .stat-card .value { font-size: 16px !important; }
+            .btn { padding: 5px 10px; font-size: 10px; }
+            .chart-inner { height: 180px !important; }
+            .section-card h3 { font-size: 13px; }
+        }
     </style>
 </head>
 <body>
@@ -153,6 +202,13 @@
             <router-view></router-view>
         </main>
         <div v-if="toast.show" class="toast" :class="toast.type">{{ toast.message }}</div>
+        <nav class="mobile-nav">
+            <a href="#/finance/dashboard">📊</a>
+            <a href="#/finance/pos">💳</a>
+            <a href="#/finance/reports">📈</a>
+            <a href="#/finance/loans">💰</a>
+            <a href="#/finance/settings">⚙️</a>
+        </nav>
     </div>
     <script src="/static/finance-app.js"></script>
 </body>
