@@ -112,11 +112,16 @@ BASE_DIR = Path(__file__).resolve().parent
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
+from fastapi.responses import RedirectResponse
+
+
 @app.get("/")
 def root():
-    """根路径：返回服务基本信息和入口链接"""
-    return {
-        "message": "LightPress CMS API",
-        "docs": "/docs",
-        "frontend": "/static/index.html",
-    }
+    """根路径：重定向到财智管家"""
+    return RedirectResponse(url="/static/finance.html")
+
+
+@app.get("/index.html")
+def index_html():
+    """兼容 /index.html 访问"""
+    return RedirectResponse(url="/static/finance.html")
