@@ -104,13 +104,13 @@ def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_
     reminders = []
     loan_map = {}
 
-    # 每笔活跃贷款取最早待还计划，不限日期
+    # 每笔活跃贷款取最早待还，只收7天内的
     for loan in db.query(Loan).filter(Loan.status == "active").all():
         first_rp = db.query(RepaymentPlan).filter(
             RepaymentPlan.loan_id == loan.id,
             RepaymentPlan.status == "pending"
         ).order_by(RepaymentPlan.period_no).first()
-        if not first_rp:
+        if not first_rp or first_rp.due_date > cutoff:
             continue
         platform_name = loan.platform.name if loan.platform else ""
         key = f"{platform_name}_{loan.person_id}"
@@ -123,7 +123,6 @@ def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_
         d["due_date"] = min(d["due_date"], first_rp.due_date)
         d["days_left"] = min(d["days_left"], (first_rp.due_date - today).days)
     for d in loan_map.values():
-        if d["due_date"] <= cutoff:
             reminders.append(schemas.RepayReminderItem(
                 type="loan", name=d["name"], person_name=d["person_name"],
                 card_last4="", due_date=d["due_date"], amount=round(d["amount"], 2),
