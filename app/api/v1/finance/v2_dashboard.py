@@ -137,7 +137,7 @@ def get_v2_dashboard(db: Session = Depends(get_db), user: User = Depends(get_cur
     # =============================================
     # 指标 2: 生存线
     # =============================================
-    survival_line = round(monthly_income - monthly_expense - monthly_interest, 2)
+    survival_line = round(monthly_income - monthly_expense - monthly_interest - monthly_pos_fee, 2)
     survival_risk = _risk_reverse(survival_line, (0, monthly_income * 0.1))
     if survival_line < 0:
         survival_desc = f"每月现金流缺口 ¥{abs(survival_line):,.0f}"
@@ -173,7 +173,7 @@ def get_v2_dashboard(db: Session = Depends(get_db), user: User = Depends(get_cur
     # =============================================
     # 指标 4: 现金流破裂预警（月）
     # =============================================
-    cash_gap = round(monthly_income - monthly_expense - monthly_interest, 2)  # 与生存线保持一致
+    cash_gap = round(monthly_income - monthly_expense - monthly_interest - monthly_pos_fee, 2)  # 与生存线保持一致
     if cash_gap < 0 and cash_on_hand > 0:
         cash_flow_rupture = round(cash_on_hand / abs(cash_gap), 1)
         rupture_formatted = f"{cash_flow_rupture:.0f} 个月"
