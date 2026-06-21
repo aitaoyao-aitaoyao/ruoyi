@@ -258,8 +258,21 @@ const DashboardPage = {
         <div class="chart-box"><div class="title">负债分布</div><div ref="pieChart" class="chart-inner"></div></div>
         <div class="chart-box"><div class="title">负债趋势（近12月快照）</div><div ref="trendChart" class="chart-inner"></div></div>
     </div>
+    <div v-if="overdueRepayments && overdueRepayments.length" class="section-title" style="color:var(--red)">⚠ 逾期还款（{{ overdueRepayments.length }}条，请逐条确认）</div>
+    <div v-for="r in overdueRepayments" :key="'od'+r.id" class="remind-item urgent" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div><span class="badge red">逾期{{ r.days_overdue }}天</span>
+            <strong style="margin-left:8px">{{ r.name }}</strong> <span style="color:#888">({{ r.person_name }})</span>
+            <span style="color:#888;margin-left:4px;font-size:11px">第{{ r.period_no }}期 · {{ r.due_date }}</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+            <div style="font-weight:bold;font-size:14px;color:var(--red)">¥{{ fmt(r.amount) }}</div>
+            <button class="btn btn-secondary btn-xs" @click="markOverduePaid(r.id)">确认已还</button>
+            <button class="btn btn-secondary btn-xs" @click="confirmOverdue(r.id)" style="color:var(--yellow)">确认逾期</button>
+        </div>
+    </div>
+
     <div class="section-title">最近7天还款提醒</div>
-    <div v-if="reminders.length === 0" class="empty-state">暂无到期提醒</div>
+    <div v-if="reminders.length === 0 && (!overdueRepayments || !overdueRepayments.length)" class="empty-state">暂无到期提醒</div>
     <div v-for="r in reminders" :key="r.type + r.name" class="remind-item" :class="r.days_left <= 1 ? 'urgent' : r.days_left <= 3 ? 'warning' : 'normal'">
         <div><span :class="'badge ' + (r.type === 'loan' ? 'red' : r.type === 'card' ? 'blue' : 'yellow')">{{ typeLabel(r.type) }}</span>
             <strong style="margin-left:8px">{{ r.name }}</strong> <span style="color:#888">({{ r.person_name }})</span>
@@ -307,7 +320,7 @@ const DashboardPage = {
 </div>`,
     data() {
         return {
-            dash: {}, reminders: [], snapshots: [], cashHistory: [],
+            dash: {}, reminders: [], snapshots: [], cashHistory: [], overdueRepayments: [],
             showInterestModal: false,
             interestDetail: { total: 0, period: '', items: [] },
             monthlyBudget: 0,
@@ -317,6 +330,7 @@ const DashboardPage = {
     async mounted() {
         try { this.dash = await api('/dashboard'); } catch(e) { this.showToast(e.message, 'error'); }
         try { this.reminders = await api('/repay-reminders'); } catch(e) { this.showToast(e.message, 'error'); }
+        try { this.overdueRepayments = await api('/repay-overdue'); } catch(e) {}
         try { this.snapshots = await api('/reports/snapshots?months=12'); } catch(e) {}
         try { this.v2 = await api('/v2/dashboard'); } catch(e) {}
         try { const riskData = await api('/v2/risk-assessment'); this.v2.risk = riskData; } catch(e) {}
@@ -342,6 +356,14 @@ const DashboardPage = {
         typeLabel(t) { const m = { loan: '贷款', card: '信用卡', installment: '分期' }; return m[t] || t; },
         metricLabel(k) { const m = { debt_burn_rate: '债务燃烧率', survival_line: '生存线', debt_freedom_months: '债务自由预期', cash_flow_rupture: '现金流破裂预警', interest_consumption_rate: '利息消耗率' }; return m[k] || k; },
         metricTooltip(k) { const m = { debt_burn_rate: '月利息 + 月手续费 − 月减少本金。正值=债务恶化，负值=债务下降', survival_line: '月收入 − 月支出 − 月利息。正值=止血有结余，负值=持续失血', debt_freedom_months: '总负债 ÷ 生存线。按当前结余速度预计还清全部债务的月数', cash_flow_rupture: '手头现金 ÷ |月缺口|。手头现金能支撑多少个月不被耗尽', interest_consumption_rate: '月利息 ÷ 月收入 × 100%。利息占收入比例，越高越危险' }; return m[k] || ''; },
+        async markOverduePaid(rpId) {
+            try { await api('/loans/repayments/' + rpId + '/pay', { method: 'PATCH' }); this.showToast('已标记还款'); this.overdueRepayments = await api('/repay-overdue'); this.reminders = await api('/repay-reminders'); } catch(e) { this.showToast(e.message, 'error'); }
+        },
+        async confirmOverdue(rpId) {
+            if (!confirm('确认此还款确实逾期？确认后将从逾期列表中移除。')) return;
+            this.overdueRepayments = this.overdueRepayments.filter(r => r.id !== rpId);
+            this.showToast('已确认逾期，请尽快处理');
+        },
         async showInterestDetail() {
             try {
                 this.interestDetail = await api('/monthly-interest-detail');
@@ -2112,8 +2134,11 @@ const SettingsPage = {
         </div>
     </div>
     <div class="section-card">
-        <h3 style="margin:0 0 12px 0">数据导出</h3>
-        <button class="btn btn-secondary" @click="exportData">导出 CSV（Excel可打开）</button>
+        <h3 style="margin:0 0 12px 0">数据安全</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-secondary" @click="exportData">导出 CSV</button>
+            <button class="btn btn-secondary" @click="backupDB">备份数据库</button>
+        </div>
     </div>
     <div class="section-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -2148,6 +2173,9 @@ const SettingsPage = {
     },
     methods: {
         fmt,
+        async backupDB() {
+            try { const r = await api('/settings/backup', { method: 'POST' }); this.showToast(r.message || '备份完成'); } catch(e) { this.showToast(e.message, 'error'); }
+        },
         exportData() {
             const token = getToken();
             const a = document.createElement('a');

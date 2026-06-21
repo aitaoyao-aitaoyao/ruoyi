@@ -72,6 +72,34 @@ def get_dashboard(db: Session = Depends(get_db), user: User = Depends(get_curren
     }
 
 
+@router.get("/repay-overdue")
+def get_overdue_repayments(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """获取逾期未还的还款计划"""
+    today = date.today()
+    items = db.query(RepaymentPlan).filter(
+        RepaymentPlan.status == "pending",
+        RepaymentPlan.due_date < today,
+    ).order_by(RepaymentPlan.due_date).all()
+
+    result = []
+    for rp in items:
+        loan = rp.loan
+        platform_name = loan.platform.name if loan and loan.platform else ""
+        result.append({
+            "id": rp.id,
+            "loan_id": rp.loan_id,
+            "period_no": rp.period_no,
+            "amount": rp.total_amount,
+            "principal": rp.principal,
+            "interest": rp.interest,
+            "due_date": str(rp.due_date),
+            "days_overdue": (today - rp.due_date).days,
+            "name": f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}",
+            "person_name": rp.person.name if rp.person else "",
+        })
+    return result
+
+
 @router.get("/repay-reminders", response_model=list[schemas.RepayReminderItem])
 def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     today = date.today()

@@ -25,7 +25,7 @@ from app.models import User
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "lightpress-secret-key-change-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 480  # Token 有效期 8 小时
+ACCESS_TOKEN_EXPIRE_MINUTES = 43200  # Token 有效期 30 天
 
 # passlib 密码上下文：使用 bcrypt 算法，自动处理加盐(salt)和哈希
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")

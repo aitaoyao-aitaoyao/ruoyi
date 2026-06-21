@@ -587,6 +587,16 @@ def pay_repayment(db: Session, repayment_id: int) -> Optional[RepaymentPlan]:
         rp.status = "paid"
         rp.paid_date = datetime.utcnow()
         db.commit()
+        # 检查是否所有期数都已还清，自动结清贷款
+        loan = rp.loan
+        if loan and loan.periods > 0:
+            all_paid = db.query(RepaymentPlan).filter(
+                RepaymentPlan.loan_id == loan.id,
+                RepaymentPlan.status == "pending"
+            ).count() == 0
+            if all_paid:
+                loan.status = "closed"
+                db.commit()
         db.refresh(rp)
     return rp
 
