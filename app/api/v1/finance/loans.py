@@ -53,8 +53,6 @@ def create_loan(data: schemas.LoanCreate, db: Session = Depends(get_db), user: U
 
 @router.get("/", response_model=list[schemas.LoanRead])
 def list_loans(person_id: int = Query(None), db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """获取借款列表，同时自动标记所有已还期数"""
-    _auto_pay_periods(db)
     return crud.get_loans(db, person_id)
 
 
@@ -98,20 +96,6 @@ def get_loan(loan_id: int, db: Session = Depends(get_db), user: User = Depends(g
 
 @router.get("/{loan_id}/repayments", response_model=list[schemas.RepaymentPlanRead])
 def get_loan_repayments(loan_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """获取还款计划，并自动标记已还期数（仅标记状态，不生成还款记录）"""
-    loan = crud.get_loan(db, loan_id)
-    if loan and loan.paid_periods > 0:
-        # 自动将 paid_periods 范围内的 pending 计划标记为 paid，不创建任何还款交易记录
-        pending_plans = db.query(RepaymentPlan).filter(
-            RepaymentPlan.loan_id == loan_id,
-            RepaymentPlan.status == "pending",
-            RepaymentPlan.period_no <= loan.paid_periods
-        ).all()
-        for rp in pending_plans:
-            rp.status = "paid"
-            rp.paid_date = rp.due_date  # 使用到期日作为还款日，因为录入时就是已还的
-        if pending_plans:
-            db.commit()
     return crud.get_repayments(db, loan_id)
 
 

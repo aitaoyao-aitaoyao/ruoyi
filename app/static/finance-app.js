@@ -330,7 +330,7 @@ const DashboardPage = {
     async mounted() {
         try { this.dash = await api('/dashboard'); } catch(e) { this.showToast(e.message, 'error'); }
         try { this.reminders = await api('/repay-reminders'); } catch(e) { this.showToast(e.message, 'error'); }
-        try { const od = await api('/repay-overdue'); this.overdueRepayments = od.items || []; if (od.auto_processed && od.auto_processed.length) { this.showToast('系统已自动处理 ' + od.auto_processed.length + ' 条逾期15天以上的还款'); } } catch(e) {}
+        try { const od = await api('/repay-overdue'); this.overdueRepayments = od.items || []; } catch(e) {}
         try { this.snapshots = await api('/reports/snapshots?months=12'); } catch(e) {}
         try { this.v2 = await api('/v2/dashboard'); } catch(e) {}
         try { const riskData = await api('/v2/risk-assessment'); this.v2.risk = riskData; } catch(e) {}
