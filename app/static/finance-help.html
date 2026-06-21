@@ -3,273 +3,497 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>财智管家 - 功能介绍</title>
+<title>财智管家 - 完整功能手册</title>
 <style>
-:root { --bg-primary:#0d0d1a;--bg-secondary:#13132b;--card-bg:rgba(26,26,46,0.8);--red:#e94560;--green:#00d2a0;--yellow:#f9ca24;--blue:#4facfe;--text:#fff;--text-secondary:#888;--border:rgba(255,255,255,0.06); }
+:root{--bg:#0d0d1a;--bg2:#13132b;--cbg:rgba(26,26,46,0.8);--r:#e94560;--g:#00d2a0;--y:#f9ca24;--b:#4facfe;--t:#fff;--t2:#888;--bd:rgba(255,255,255,0.06)}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-primary);color:var(--text);line-height:1.8;min-height:100vh}
-.container{max-width:900px;margin:0 auto;padding:24px 20px}
-h1{font-size:28px;color:var(--red);margin-bottom:8px;text-align:center}
-.subtitle{text-align:center;color:var(--text-secondary);margin-bottom:40px;font-size:14px}
-h2{font-size:20px;color:var(--blue);margin:32px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-h3{font-size:16px;color:var(--yellow);margin:20px 0 10px}
-h4{font-size:14px;color:var(--green);margin:16px 0 8px}
-p{font-size:13px;color:#ccc;margin:8px 0}
-.card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:20px;margin:16px 0}
-.formula{background:rgba(79,172,254,0.08);border:1px solid rgba(79,172,254,0.2);border-radius:8px;padding:12px 16px;margin:8px 0;font-family:'Courier New',monospace;font-size:12px;color:var(--blue);white-space:pre-wrap}
-.note{font-size:11px;color:var(--text-secondary);font-style:italic;margin:4px 0}
-.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;margin-right:4px}
-.tag-green{background:rgba(0,210,160,.2);color:var(--green)}
-.tag-red{background:rgba(233,69,96,.2);color:var(--red)}
-.tag-yellow{background:rgba(249,202,36,.2);color:var(--yellow)}
-.tag-blue{background:rgba(79,172,254,.2);color:var(--blue)}
-.nav{position:fixed;top:16px;right:16px;z-index:10}
-.nav a{color:var(--text-secondary);font-size:12px;text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;transition:all .2s}
-.nav a:hover{color:var(--red);border-color:var(--red)}
-table{width:100%;border-collapse:collapse;font-size:12px;margin:12px 0}
-th{background:var(--bg-secondary);padding:10px;border:1px solid var(--border);text-align:left;font-size:11px;color:var(--text-secondary)}
-td{padding:8px 10px;border:1px solid rgba(255,255,255,0.04)}
+body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--t);line-height:1.8;min-height:100vh}
+.c{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:26px;color:var(--r);text-align:center;margin:8px 0}
+h2{font-size:19px;color:var(--b);margin:36px 0 14px;padding-bottom:6px;border-bottom:1px solid var(--bd)}
+h3{font-size:15px;color:var(--y);margin:22px 0 8px}
+h4{font-size:13px;color:var(--g);margin:14px 0 6px}
+p,li{font-size:13px;color:#ccc;margin:4px 0}
+.card{background:var(--cbg);border:1px solid var(--bd);border-radius:10px;padding:16px 20px;margin:12px 0}
+.formula{background:rgba(79,172,254,0.06);border:1px solid rgba(79,172,254,0.15);border-radius:6px;padding:8px 14px;margin:6px 0;font-family:monospace;font-size:12px;color:var(--b);white-space:pre-wrap}
+.impact{background:rgba(233,69,96,0.05);border-left:3px solid var(--r);border-radius:0 6px 6px 0;padding:8px 14px;margin:8px 0;font-size:12px;color:var(--r)}
+.impact strong{color:var(--r)}
+.flow{background:rgba(0,210,160,0.04);border-left:3px solid var(--g);border-radius:0 6px 6px 0;padding:8px 14px;margin:8px 0;font-size:12px}
+.btn-desc{display:inline-block;background:rgba(255,255,255,0.06);border:1px solid var(--bd);border-radius:4px;padding:1px 8px;font-size:11px;margin:2px;color:var(--t)}
+table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+th{background:var(--bg2);padding:8px;border:1px solid var(--bd);text-align:left;font-size:11px;color:var(--t2)}
+td{padding:7px 8px;border:1px solid rgba(255,255,255,0.04);vertical-align:top}
 tr:hover{background:rgba(255,255,255,0.01)}
-.back-link{display:inline-block;margin-top:40px;color:var(--red);text-decoration:none;font-size:14px}
-@media(max-width:768px){.container{padding:16px 12px}h1{font-size:22px}h2{font-size:17px}}
+.nav{position:fixed;top:12px;right:12px;z-index:10}
+.nav a{color:var(--t2);font-size:11px;text-decoration:none;padding:5px 10px;border:1px solid var(--bd);border-radius:5px}
+.nav a:hover{color:var(--r);border-color:var(--r)}
+ul{padding-left:20px;margin:6px 0}
+a{color:var(--b)}
+@media(max-width:768px){.c{padding:12px 8px 80px}h1{font-size:20px}h2{font-size:16px}.card{padding:12px 14px}}
 </style>
 </head>
 <body>
 <div class="nav"><a href="/static/finance.html">← 返回系统</a></div>
-<div class="container">
+<div class="c">
 
-<h1>📊 财智管家</h1>
-<p class="subtitle">专业个人债务管理系统 · 功能完整说明</p>
+<h1>财智管家 · 完整功能手册</h1>
+<p style="text-align:center;color:var(--t2);font-size:13px;margin-bottom:30px">每个模块 · 每个卡片 · 每个按钮 · 操作影响全链路</p>
 
-<!-- 总览 -->
-<h2>一、系统总览</h2>
+<!-- ===== 目录 ===== -->
+<h2>目录</h2>
 <div class="card">
-<p>财智管家是一套<strong>专业的个人/家庭债务管理系统</strong>，覆盖贷款、信用卡、POS刷卡、分期、房贷等全类型债务，提供从录入、追踪、分析到模拟优化的完整闭环。</p>
-<p>系统包含 <strong>18 个功能模块</strong>，分为四大类：</p>
+<ol style="font-size:13px;color:#ccc">
+<li><a href="#s1">仪表盘</a> — 核心指标·风险指标·图表·还款提醒·利息明细</li>
+<li><a href="#s2">债务模拟器</a> — 收入模拟·提前还款模拟·风险评级拆解</li>
+<li><a href="#s3">借贷管理</a> — 借款CRUD·还款计划·灵活期限</li>
+<li><a href="#s4">信用卡管理</a> — 基本信息·账单系统·还款操作·撤销</li>
+<li><a href="#s5">POS刷卡</a> — 刷卡记录·退款·费率配置</li>
+<li><a href="#s6">分期管理</a> — 分期CRUD·每期还款·费率计算</li>
+<li><a href="#s7">房贷管理</a> — 房贷CRUD·提前还款计算</li>
+<li><a href="#s8">收入管理</a> — 收入CRUD·编辑联动</li>
+<li><a href="#s9">支出管理</a> — 支出CRUD·自定义分类</li>
+<li><a href="#s10">统计报告</a> — 利息统计·缺口分析·雪崩雪球·POS统计·预测</li>
+<li><a href="#s11">设置</a> — 手头现金·月预算·费率·导出·数据管理</li>
+<li><a href="#s12">附录：数据联动全景图</a></li>
+</ol>
+</div>
+
+<!-- ===== 1. 仪表盘 ===== -->
+<h2 id="s1">一、仪表盘</h2>
+
+<h3>1.1 核心指标卡片（第一行）</h3>
+<div class="card">
 <table>
-<tr><th>类别</th><th>模块</th></tr>
-<tr><td>📊 总览决策</td><td>仪表盘、风险指标、债务模拟器</td></tr>
-<tr><td>💰 债务管理</td><td>借贷管理、信用卡(账单)、POS刷卡、分期管理、房贷管理</td></tr>
-<tr><td>📈 收支管理</td><td>收入管理、支出管理、统一流水</td></tr>
-<tr><td>📋 分析报告</td><td>统计报告、雪崩/雪球方案、基础数据(人员/平台/回收站)、设置</td></tr>
+<tr><th style="width:140px">卡片</th><th>含义</th><th>点击行为</th><th>影响链路</th></tr>
+<tr>
+<td>总负债(含房贷)</td>
+<td>全部未偿还债务金额</td>
+<td>无(仅展示)</td>
+<td>来源：贷款待还本金 + 信用卡未还账单 + 分期剩余 + 房贷剩余本金<br>修改任一项→此卡片自动刷新</td>
+</tr>
+<tr>
+<td>总负债(不含房贷)</td>
+<td>除房贷外的债务</td>
+<td>无</td>
+<td>同上，减去房贷部分</td>
+</tr>
+<tr>
+<td>总资产</td>
+<td>所有收入记录的总和</td>
+<td>无</td>
+<td>来源：Income表所有记录SUM<br>新增/编辑/删除收入→刷新</td>
+</tr>
+<tr>
+<td>本月应付利息</td>
+<td>本月需要支付的利息</td>
+<td><span class="btn-desc">点击</span>弹出利息明细弹窗</td>
+<td>来源：贷款利息(待还计划due_date在当月)+分期手续费(当月到期)+房贷月利息<br><span class="impact">联动：修改还款计划/分期/房贷→此卡片变化→V2生存线变化→V2利息消耗率变化</span></td>
+</tr>
+<tr>
+<td>本月POS手续费</td>
+<td>本月POS刷卡手续费合计</td>
+<td>无</td>
+<td>来源：PosSwipe表当月fee汇总<br>新增/编辑/删除POS记录→刷新</td>
+</tr>
+<tr>
+<td>净资产</td>
+<td>手头现金-总负债</td>
+<td>无</td>
+<td><span class="flow">来源：设置页手头现金 - 总负债<br>存钱/负债变化→净资产同步变</span></td>
+</tr>
+<tr>
+<td>月预算执行率</td>
+<td>当月支出÷月预算×100%</td>
+<td>无</td>
+<td><span class="flow">来源：设置页月预算 + 当月支出<br>设预算后新增支出→执行率实时更新<br>>100%红色警告</span></td>
+</tr>
 </table>
 </div>
 
-<!-- 仪表盘 -->
-<h2>二、仪表盘</h2>
+<h3>1.2 V2风险指标卡片（第二行）</h3>
 <div class="card">
-<h3>核心指标卡片</h3>
 <table>
-<tr><th>指标</th><th>说明</th><th>数据来源</th></tr>
-<tr><td>总负债(含房贷)</td><td>全部未偿还债务总和</td><td>贷款待还本金 + 信用卡未还账单 + 分期剩余 + 房贷剩余本金</td></tr>
-<tr><td>总负债(不含房贷)</td><td>扣除房贷后的债务</td><td>同上，减去房贷部分</td></tr>
-<tr><td>总资产</td><td>历史累计总收入</td><td>所有收入记录总和</td></tr>
-<tr><td>本月应付利息</td><td>本月需要支付的利息总额</td><td>贷款利息(待还计划) + 分期手续费(本月到期) + 房贷月利息</td></tr>
-<tr><td>本月POS手续费</td><td>本月POS刷卡手续费</td><td>当月POS刷卡fee字段汇总</td></tr>
-<tr><td>净资产</td><td>手头现金 - 总负债</td><td>现金余额 - 总负债</td></tr>
-<tr><td>月预算执行率</td><td>当月支出占预算百分比</td><td>当月支出 ÷ 月预算 × 100%</td></tr>
+<tr><th style="width:140px">卡片</th><th>公式</th><th>风险阈值</th><th>操作影响链路</th></tr>
+<tr>
+<td>债务燃烧率</td>
+<td><span class="formula">月利息 + 月POS手续费 - 月减少本金</span></td>
+<td>≤0🟢 0~1000🟡 >1000🔴</td>
+<td><span class="impact"><strong>触发变化：</strong>标记还款→月减少本金↑→燃烧率↓<br>新增分期→月利息↑→燃烧率↑<br>新增POS→月手续费↑→燃烧率↑</span></td>
+</tr>
+<tr>
+<td>生存线</td>
+<td><span class="formula">月收入 - 月支出 - 月利息</span></td>
+<td>>月收入10%🟢 0~10%🟡 <0🔴</td>
+<td><span class="impact"><strong>触发变化：</strong>新增收入→生存线↑<br>新增支出→生存线↓<br>利息增加→生存线↓<br><strong>向下影响：</strong>生存线变化→债务自由预期变化→风险评级变化</span></td>
+</tr>
+<tr>
+<td>债务自由预期</td>
+<td><span class="formula">总负债 ÷ 生存线</span></td>
+<td>≤24月🟢 24~60🟡 >60🔴</td>
+<td><span class="impact"><strong>取决于：</strong>生存线和总负债<br>还债→总负债↓→自由月数↓<br>生存线变负→显示"无法还清"</span></td>
+</tr>
+<tr>
+<td>现金流破裂预警</td>
+<td><span class="formula">手头现金 ÷ |月缺口|</span></td>
+<td>≥12月🟢 6~12🟡 <3🔴</td>
+<td><span class="impact"><strong>取决于：</strong>设置页录入的手头现金<br>现金不足→破裂月数↓→风险评级中"现金流"维度恶化<br>现金流为正→显示"无破裂风险"</span></td>
+</tr>
+<tr>
+<td>利息消耗率</td>
+<td><span class="formula">月利息 ÷ 月收入 × 100%</span></td>
+<td><15%🟢 15~30🟡 >30🔴</td>
+<td><span class="impact"><strong>触发变化：</strong>利息增加或收入减少→消耗率↑<br>收入增加→消耗率↓<br><strong>向下影响：</strong>风险评级"利息吞噬"维度</span></td>
+</tr>
+</table>
+</div>
+
+<h3>1.3 图表区</h3>
+<div class="card">
+<table>
+<tr><th>图表</th><th>数据来源</th><th>操作影响</th></tr>
+<tr><td>负债分布(饼图)</td><td>贷款/信用卡/分期/房贷四项</td><td>任意债务变化→饼图刷新</td></tr>
+<tr><td>负债趋势(折线)</td><td>debt_snapshots表近12月</td><td>每日快照自动生成</td></tr>
+<tr><td>月度收支缺口</td><td>12个月gap-analysis API</td><td>新增收支→缺口柱线图刷新</td></tr>
+<tr><td>净资产趋势</td><td>快照+现金记录按月份对齐</td><td>录入现金→净资产曲线刷新</td></tr>
+</table>
+</div>
+
+<h3>1.4 还款提醒 & 利息明细</h3>
+<div class="card">
+<p><strong>还款提醒</strong>：未来7天内到期的待还计划 + 信用卡还款日。来源：RepaymentPlan(pending, due_date在7天内) + CreditCard(bill_day在7天内)</p>
+<p><strong>本月应付利息弹窗</strong>：<span class="btn-desc">点击本月应付利息卡片</span>打开。逐项列出贷款利息、分期手续费、房贷利息。每项包含名称、人员、到期日、金额、备注。</p>
+</div>
+
+<!-- ===== 2. 债务模拟器 ===== -->
+<h2 id="s2">二、债务模拟器</h2>
+<div class="card">
+<table>
+<tr><th>区块</th><th>功能</th><th>操作影响</th></tr>
+<tr>
+<td>综合风险评级</td>
+<td>5维加权评分A~E</td>
+<td>任何底层数据变化→评级自动刷新</td>
+</tr>
+<tr>
+<td>收入模拟器</td>
+<td>预设薪资/副业档位查看各指标变化</td>
+<td><span class="btn-desc">点击档位芯片</span>或<span class="btn-desc">输入自定义金额</span>→实时计算生存线/利息吞噬率/债务自由/年度净还债<br><span class="impact">这是"如果...那么..."模拟，不修改真实数据，纯计算展示</span></td>
+</tr>
+<tr>
+<td>提前还款模拟</td>
+<td>输入额外月还款金额</td>
+<td>计算新的生存线、债务自由时间、年度多还利息<br><span class="impact">不修改真实数据，仅测算</span></td>
+</tr>
+<tr>
+<td>风险维度拆解</td>
+<td>5个维度各显示A~E等级</td>
+<td>鼠标悬停显示公式和权重</td>
+</tr>
+</table>
+</div>
+
+<!-- ===== 3. 借贷管理 ===== -->
+<h2 id="s3">三、借贷管理</h2>
+<div class="card">
+<table>
+<tr><th>操作</th><th>按钮</th><th>影响链路</th></tr>
+<tr>
+<td>新增借款</td>
+<td><span class="btn-desc">+ 新增借款</span></td>
+<td>创建Loan记录+自动生成RepaymentPlan<br><span class="impact">→ 仪表盘总负债↑ → V2总负债↑ → 风险评级恶化<br>→ 统计报告平台分布刷新<br>→ 快照表新增记录</span></td>
+</tr>
+<tr>
+<td>编辑借款</td>
+<td><span class="btn-desc">编辑</span></td>
+<td>修改金额/利率/期数等<br><span class="impact">→ 还款计划自动重新生成(regenerate-plan)<br>→ 仪表盘负债金额变化<br>→ 利息统计变化<br>→ 快照表变化</span><br>已还期数自动计算=当前年月-开始年月</td>
+</tr>
+<tr>
+<td>还款计划</td>
+<td><span class="btn-desc">还款计划</span></td>
+<td>打开还款计划列表弹窗<br><span class="btn-desc">标记已还</span>：将该期status改为paid，记录paid_date<br><span class="impact">→ 该贷款paid_periods↑ → 剩余期数↓<br>→ 仪表盘总负债↓ → V2债务燃烧率↓<br>→ 月减少本金↑ → 燃烧率向健康方向变化<br>→ 统计报告利息统计(按due_date归属)</span></td>
+</tr>
+<tr>
+<td>批量删除</td>
+<td><span class="btn-desc">批量删除</span></td>
+<td>勾选多条+确认→删除Loan及关联RepaymentPlan<br><span class="impact">→ 仪表盘总负债↓ → 统计报告数据变化</span></td>
+</tr>
+<tr>
+<td>灵活期限</td>
+<td>还款方式选<span class="btn-desc">无固定期限(个人借贷)</span></td>
+<td>不生成还款计划，期限=0，利率=0<br>手动编辑已还期数</td>
+</tr>
+</table>
+</div>
+
+<!-- ===== 4. 信用卡 ===== -->
+<h2 id="s4">四、信用卡管理</h2>
+<div class="card">
+<table>
+<tr><th>操作</th><th>按钮</th><th>影响链路</th></tr>
+<tr>
+<td>新增信用卡</td>
+<td><span class="btn-desc">+ 新增信用卡</span></td>
+<td>创建CreditCard记录<br>必须设置账单日和还款日</td>
+</tr>
+<tr>
+<td>查看账单</td>
+<td><span class="btn-desc">查看账单</span></td>
+<td>自动生成当期账单(如不存在)<br>账单金额=POS刷卡+信用卡消费自动汇总</td>
+</tr>
+<tr>
+<td>全额还款</td>
+<td><span class="btn-desc">全额还</span></td>
+<td>paid_amount=bill_amount, status=paid<br><span class="impact">→ 该卡负债清零 → 仪表盘总负债↓ → 信用卡负债卡片↓<br>→ V2生存线不变(还信用卡不影响收支)<br>→ 快照card_debt↓</span></td>
+</tr>
+<tr>
+<td>最低还款</td>
+<td><span class="btn-desc">最低还</span></td>
+<td>paid_amount=min_payment(账单金额×10%), status=partial<br><span class="impact">→ 该卡负债=账单金额-最低还款额<br>→ 剩余差额仍计入总负债</span></td>
+</tr>
+<tr>
+<td>录入账单</td>
+<td><span class="btn-desc">录入</span></td>
+<td>弹窗可修改：账单金额、实际还款、利息、手续费、账单周期日期、还款截止日<br><span class="impact">→ 修改账单金额→该卡负债变化→总负债变化<br>→ 修改利息→统计报告利息统计变化→V2利息消耗率变化<br>→ 修改还款日→还款提醒变化</span></td>
+</tr>
+<tr>
+<td>撤销还款</td>
+<td><span class="btn-desc">撤销</span></td>
+<td>paid_amount=0, status=unpaid<br><span class="impact">→ 恢复到未还状态→负债重新计入→总负债↑</span></td>
+</tr>
+<tr>
+<td>编辑信息</td>
+<td><span class="btn-desc">编辑信息</span></td>
+<td>修改额度、利率、账单日、还款日</td>
+</tr>
+</table>
+</div>
+
+<!-- ===== 5. POS刷卡 ===== -->
+<h2 id="s5">五、POS刷卡</h2>
+<div class="card">
+<table>
+<tr><th>操作</th><th>影响链路</th></tr>
+<tr>
+<td>新增刷卡</td>
+<td>创建PosSwipe记录，手续费=金额×费率(自动)<br><span class="impact">→ 本月POS手续费↑<br>→ 信用卡当期账单金额↑(自动汇总)<br>→ V2债务燃烧率变化(手续费增加)<br>→ 统计报告POS手续费统计变化</span></td>
+</tr>
+<tr>
+<td><span class="btn-desc">☑ 退款</span></td>
+<td>勾选后金额自动变负数，手续费清零<br><span class="impact">→ POS手续费本月统计减少<br>→ 信用卡账单金额相应扣减<br>→ 信用卡已用额度减少</span></td>
+</tr>
+<tr>
+<td>编辑/删除</td>
+<td>修改金额或费率→手续费重算→联动同上</td>
+</tr>
+</table>
+</div>
+
+<!-- ===== 6. 分期管理 ===== -->
+<h2 id="s6">六、分期管理</h2>
+<div class="card">
+<table>
+<tr><th>操作</th><th>影响链路</th></tr>
+<tr>
+<td>新增分期</td>
+<td>选择费率输入方式(每期费率/年化利率/总手续费)→系统自动计算每期还款<br><span class="impact">→ 仪表盘分期负债↑ → 总负债↑<br>→ 每月利息(本月到期的期数×每期手续费)<br>→ 统计报告利息统计变化</span></td>
+</tr>
+<tr>
+<td><span class="btn-desc">还一期</span></td>
+<td>paid_periods+1<br><span class="impact">→ 分期剩余本金↓ → 分期负债↓ → 总负债↓<br>→ 本月减少本金↑ → V2债务燃烧率↓<br>→ 快照表installment_debt刷新</span></td>
+</tr>
+<tr>
+<td>编辑</td>
+<td>可修改金额、期数、费率等</td>
+</tr>
+</table>
+</div>
+
+<!-- ===== 7. 房贷管理 ===== -->
+<h2 id="s7">七、房贷管理</h2>
+<div class="card">
+<table>
+<tr><th>操作</th><th>影响链路</th></tr>
+<tr>
+<td>新增房贷</td>
+<td><span class="impact">→ 仪表盘房贷负债↑ → 总负债↑<br>→ 每月房贷利息=剩余本金×年利率÷12<br>→ V2生存线变化(利息增加)<br>→ 统计报告利息统计变化</span></td>
+</tr>
+<tr>
+<td><span class="btn-desc">更新本金</span></td>
+<td>手动修改剩余本金<br><span class="impact">→ 房贷负债变化→总负债变化→月利息变化<br>→ 净资产变化</span></td>
+</tr>
+<tr>
+<td><span class="btn-desc">提前还</span></td>
+<td>弹窗输入金额→计算节省利息(月/年/十年)<br><span class="impact">纯计算展示，不修改数据。如需实际执行，请手动更新剩余本金</span></td>
+</tr>
+</table>
+</div>
+
+<!-- ===== 8. 收入管理 ===== -->
+<h2 id="s8">八、收入管理</h2>
+<div class="card">
+<table>
+<tr><th>操作</th><th>影响链路</th></tr>
+<tr>
+<td>新增收入</td>
+<td>创建Income记录(period_type+period_value)<br><span class="impact">→ 仪表盘总资产↑<br>→ V2生存线↑(月收入部分)<br>→ V2利息消耗率↓<br>→ 统计报告缺口分析收入端变化<br>→ 模拟器当前收入刷新</span></td>
+</tr>
+<tr>
+<td><span class="btn-desc">编辑</span></td>
+<td>修改金额/来源/类型/月份<br><span class="impact">→ 所有引用该月份收入的模块全部重新计算<br>→ 缺口分析、V2指标、报告全部联动<br>注意：修改period_value会将收入归属到新月份</span></td>
+</tr>
+<tr>
+<td>删除</td>
+<td><span class="impact">→ 反向影响所有上述模块</span></td>
+</tr>
+</table>
+</div>
+
+<!-- ===== 9. 支出管理 ===== -->
+<h2 id="s9">九、支出管理</h2>
+<div class="card">
+<table>
+<tr><th>操作</th><th>影响链路</th></tr>
+<tr>
+<td>新增支出</td>
+<td>创建Expense记录，分类支持自定义输入<br><span class="impact">→ V2生存线↓(月支出增加)<br>→ 月预算执行率↑<br>→ 统计报告缺口分析支出端变化<br>→ 支出分类饼图刷新<br>→ V2债务自由预期恶化<br>→ 风险评级"生存线"维度恶化</span></td>
+</tr>
+<tr>
+<td>编辑/删除</td>
+<td><span class="impact">→ 反向影响所有上述模块</span></td>
+</tr>
+</table>
+</div>
+
+<!-- ===== 10. 统计报告 ===== -->
+<h2 id="s10">十、统计报告</h2>
+<div class="card">
+
+<h4>10.1 利息/手续费统计</h4>
+<table>
+<tr><th>卡片(可点击)</th><th>点击后展示</th><th>数据来源</th></tr>
+<tr><td>总利息/手续费</td><td>合并四类明细+类型标签</td><td>全部利息汇总</td></tr>
+<tr><td>贷款已付利息</td><td>多月份→按月汇总；单月份→逐笔(含平台名)</td><td>RepaymentPlan(status=paid, 按due_date分组)</td></tr>
+<tr><td>POS手续费</td><td>多月份→按月汇总；单月份→逐笔</td><td>PosSwipe表fee字段</td></tr>
+<tr><td>分期手续费</td><td>多月份→按月汇总；单月份→逐笔(含银行名)</td><td>CardInstallment已还期数×每期手续费</td></tr>
+<tr><td>房贷利息</td><td>按月×12个月</td><td>剩余本金×年利率÷12</td></tr>
 </table>
 
-<h3>V2 风险指标</h3>
+<h4>10.2 支出分类分析</h4>
+<p>环形饼图展示当月各分类支出占比，数据来自gap-analysis的expense_breakdown。</p>
+
+<h4>10.3 收支缺口分析</h4>
 <table>
-<tr><th>指标</th><th>公式</th><th>风险分级</th></tr>
-<tr><td>债务燃烧率</td><td><span class="tag tag-yellow">月利息 + 月手续费 - 月减少本金</span></td><td>≤0 健康 | 0~1000 关注 | >1000 高危</td></tr>
-<tr><td>生存线</td><td><span class="tag tag-yellow">月收入 - 月支出 - 月利息</span></td><td>>月收入10% 健康 | 0~10% 关注 | <0 高危</td></tr>
-<tr><td>债务自由预期</td><td><span class="tag tag-yellow">总负债 ÷ 生存线</span></td><td>≤24月 健康 | 24~60月 关注 | >60月 高危</td></tr>
-<tr><td>现金流破裂预警</td><td><span class="tag tag-yellow">手头现金 ÷ |月缺口|</span></td><td>>12月 安全 | 6~12月 关注 | <3月 高危</td></tr>
-<tr><td>利息消耗率</td><td><span class="tag tag-yellow">月利息 ÷ 月收入 × 100%</span></td><td><15% 健康 | 15~30% 关注 | >30% 高危</td></tr>
+<tr><th>操作</th><th>影响</th></tr>
+<tr><td>选择月份+<span class="btn-desc">分析</span></td><td>显示：总收入/总支出/缺口金额/支出分类/收入来源<br><span class="flow">下方AI洞察基于真实数据生成：储蓄率评估、负债率预警、高息债务提示、收入集中度分析、支出增长趋势、改进建议(含金额和行动方案)</span></td></tr>
 </table>
 
-<h3>图表</h3>
-<ul>
-<li><strong>负债分布</strong> — 环形饼图：贷款/信用卡/分期/房贷占比</li>
-<li><strong>负债趋势</strong> — 折线图：近12个月负债变化（每日快照）</li>
-<li><strong>月度收支缺口</strong> — 柱线混合图：收入(绿柱) + 支出(红柱) + 缺口(黄线)</li>
-<li><strong>净资产趋势</strong> — 折线图：总负债(红) + 总资产(绿) + 净资产(蓝)</li>
-<li><strong>还款提醒</strong> — 未来7天内到期的还款计划列表</li>
-</ul>
-
-<h3>风险评级徽章</h3>
-<p>仪表盘顶部显示综合风险评级(A~E)，基于5个维度加权评分：<strong>生存线(25%) + 利息吞噬率(25%) + 资产负债率(20%) + 现金流破裂(15%) + 手头现金(15%)</strong></p>
-</div>
-
-<!-- 债务模拟器 -->
-<h2>三、债务模拟器</h2>
-<div class="card">
-<h3>收入模拟器</h3>
-<p>可预设薪资档位(¥12,000~30,000)或输入自定义金额，实时计算对应生存线、利息吞噬率、债务自由时间、年度净还债额。</p>
-<p>支持 💼薪资 + 💰副业 + 💼+💰组合三种场景对比。</p>
-
-<h3>提前还款模拟</h3>
-<p>输入每月额外还款金额，计算新的生存线和债务自由时间，以及年度多还的利息节省额。</p>
-
-<h3>风险评级拆解</h3>
-<p>5个维度各显示A~E等级，说明每个维度的评分标准和当前值。</p>
-</div>
-
-<!-- 借贷管理 -->
-<h2>四、借贷管理</h2>
-<div class="card">
-<h3>借款录入</h3>
-<p>支持三种还款方式：等额本息、先息后本、到期还本付息，以及<strong>无固定期限(个人借贷)</strong></p>
-<p>录入后自动生成还款计划表，每期可标记「已还」。</p>
-
-<h3>利率类型</h3>
-<ul>
-<li><strong>月利率</strong> — 输入的百分比÷100为月利率，年化=月利率×12</li>
-<li><strong>年利率</strong> — 输入的年化利率，月利率=年利率÷12</li>
-<li><strong>总利息反推</strong> — 输入总利息金额，系统反推月利率</li>
-</ul>
-
-<h3>已还期数</h3>
-<p>编辑借款时，已还期数自动计算 = <span class="tag tag-blue">当前年月 - 开始年月</span>（按月差值），可手动调整。</p>
-</div>
-
-<!-- 信用卡 -->
-<h2>五、信用卡管理</h2>
-<div class="card">
-<h3>信用卡基本信息</h3>
-<p>每张卡维护：银行名称、卡号尾号、信用额度、账单日、还款日、年利率</p>
-
-<h3>账单系统（核心功能）</h3>
-<p>系统根据每张卡的<strong>账单日</strong>自动生成月度账单，账单金额=POS刷卡+信用卡消费汇总，可手动修改。</p>
-<p>每期账单显示：账单周期、还款截止日、账单金额、已还金额、未还金额、利息、手续费、状态</p>
-
-<h3>还款操作</h3>
-<ul>
-<li><strong>全额还款</strong> — 一键标记还清，负债清零</li>
-<li><strong>最低还款</strong> — 还款金额=账单金额×10%</li>
-<li><strong>自定义还款</strong> — 在录入弹窗中手动填写实际还款金额</li>
-<li><strong>撤销还款</strong> — 误操作可回退</li>
-</ul>
-
-<h3>负债计算逻辑</h3>
-<p>信用卡负债 = <span class="tag tag-yellow">未还账单的 (账单金额 - 已还金额)</span>。已还清的账单不计入负债。</p>
-</div>
-
-<!-- POS刷卡 -->
-<h2>六、POS刷卡</h2>
-<div class="card">
-<h3>刷卡记录</h3>
-<p>每笔记录：金额、费率(默认0.6%=60元/万)、手续费(自动计算)、关联信用卡、POS机名称</p>
-<p>支持<strong>退款</strong>操作（勾选退款复选框，金额自动转为负数，手续费清零）。</p>
-
-<h3>与信用卡账单联动</h3>
-<p>POS刷卡金额自动汇总到对应信用卡的当期账单中。</p>
-</div>
-
-<!-- 分期/房贷 -->
-<h2>七、分期管理 & 房贷管理</h2>
-<div class="card">
-<h3>分期管理</h3>
-<p>支持多费率输入方式：每期费率(%)、年化利率(%)、总手续费(元)。自动计算每期还款额和年化利率。</p>
-<p>每期可独立标记「还一期」，已还期数自动统计。</p>
-
-<h3>房贷管理</h3>
-<p>记录：银行、房产、贷款总额、剩余本金、年利率、月供</p>
-<p>提供<strong>提前还款计算器</strong>：输入提前还款金额，自动计算每月/每年/十年节省的利息。</p>
-</div>
-
-<!-- 收支管理 -->
-<h2>八、收支管理</h2>
-<div class="card">
-<h3>收入管理</h3>
-<p>支持月度/年度/一次性三种类型，按period_value归属月份。支持编辑和月份修改。</p>
-
-<h3>支出管理</h3>
-<p>分类标签支持自定义输入（餐饮/交通/购物/娱乐/医疗/教育/居住/通讯/日用/其他或自定义）。</p>
-
-<h3>统一流水</h3>
-<p>按时间轴查看所有交易记录（收入+支出+POS刷卡+信用卡消费/还款）。</p>
-
-<h3>预算设置</h3>
-<p>在设置页面设置月度预算，仪表盘实时显示预算执行率 = 当月支出 ÷ 预算 × 100%。</p>
-</div>
-
-<!-- 统计报告 -->
-<h2>九、统计报告</h2>
-<div class="card">
-<h3>利息/手续费统计</h3>
-<p>支持按年/按月/区间查询，统计贷款已付利息、POS手续费、分期手续费、房贷利息。</p>
-<p>点击任意卡片查看逐项明细（多月份时按月展示，单月份时逐笔展示）。</p>
-<p class="note">贷款利息按期数的due_date归属月份，不是按还款日期。</p>
-
-<h3>各平台贷款分布</h3>
-<p>按借贷平台统计<strong>剩余待还款金额</strong>（不是原始借贷额），饼图展示。</p>
-
-<h3>收支缺口分析</h3>
-<p>选择月份查询：收入总计、支出总计(含待还款)、缺口(收入-支出)、支出分类明细、收入来源明细。</p>
-<p>AI驱动的<strong>数据洞察和改善建议</strong>：储蓄率、负债率、高息债务、收入集中度等多维度分析。</p>
-
-<h3>POS刷卡次数统计</h3>
-<p>按年/按月/区间统计刷卡次数，柱状图展示趋势。</p>
-
-<h3>支出分类分析</h3>
-<p>环形饼图展示本月支出在各分类中的占比。</p>
-
-<h3>优先还款方案(雪崩法 vs 雪球法)</h3>
+<h4>10.4 雪崩法 vs 雪球法</h4>
 <table>
-<tr><th>策略</th><th>排序</th><th>特点</th></tr>
-<tr><td>雪崩法</td><td>按年化利率从高到低</td><td>总利息支出最小，数学最优</td></tr>
-<tr><td>雪球法</td><td>按债务余额从小到大</td><td>快速清零小债务，心理激励强</td></tr>
+<tr><th>切换</th><th>说明</th></tr>
+<tr><td><span class="btn-desc">雪崩法</span></td><td>按年化利率降序排列。对比表格显示两种方案预计还清时间和总利息。</td></tr>
+<tr><td><span class="btn-desc">雪球法</span></td><td>按债务余额升序排列。</td></tr>
 </table>
-<p>提供两种方案的对比表格：预计还清时间、总利息。</p>
 
-<h3>负债趋势预测</h3>
-<p>基于还款计划+月结余+新增借款，逐月推演未来12~36个月的负债变化。考虑信用卡复利。</p>
+<h4>10.5 POS刷卡次数统计</h4>
+<p>按年/按月/区间统计刷卡次数，柱状图展示。</p>
+
+<h4>10.6 负债趋势预测</h4>
+<p>基于还款计划+月结余+新增借款，逐月推演未来负债变化。可调整：<span class="btn-desc">包含房贷</span> <span class="btn-desc">月结余</span> <span class="btn-desc">新增借款</span></p>
 </div>
 
-<!-- 其他功能 -->
-<h2>十、其他功能</h2>
+<!-- ===== 11. 设置 ===== -->
+<h2 id="s11">十一、设置</h2>
 <div class="card">
-<h3>数据导出</h3>
-<p>设置页面一键导出全部财务数据为CSV（Excel可直接打开），包含所有数据表。</p>
-
-<h3>手头现金管理</h3>
-<p>设置页面记录手头现金余额和变更历史，用于现金流破裂预警和净资产计算。</p>
-
-<h3>POS费率配置</h3>
-<p>设置多种POS费率方案，刷卡时自动匹配或自定义。</p>
-
-<h3>回收站</h3>
-<p>删除的记录进入回收站，支持恢复或永久删除。</p>
-
-<h3>人员&平台管理</h3>
-<p>维护家庭成员和借贷平台信息，所有债务和收支记录关联到具体人员。</p>
+<table>
+<tr><th>功能</th><th>操作</th><th>影响链路</th></tr>
+<tr>
+<td>手头现金</td>
+<td><span class="btn-desc">更新余额</span></td>
+<td><span class="impact">→ V2现金流破裂预警(手头现金÷月缺口)<br>→ 净资产卡片(现金-负债)<br>→ 净资产趋势曲线<br>→ 风险评级"手头现金"维度</span></td>
+</tr>
+<tr>
+<td>月度预算</td>
+<td><span class="btn-desc">保存预算</span></td>
+<td><span class="impact">→ 仪表盘月预算执行率卡片<br>→ 支出超额时红色警告</span></td>
+</tr>
+<tr>
+<td>POS费率</td>
+<td><span class="btn-desc">添加费率</span></td>
+<td>→ POS刷卡时可选择费率</td>
+</tr>
+<tr>
+<td>数据导出</td>
+<td><span class="btn-desc">导出CSV</span></td>
+<td>下载全部10张数据表的完整CSV文件(贷款/还款计划/POS/信用卡/账单/分期/房贷/收入/支出/现金)</td>
+</tr>
+<tr>
+<td>数据管理</td>
+<td><span class="btn-desc">清空所有财务数据</span></td>
+<td><span class="impact">⚠ 不可撤销！清除所有数据表，保留人员/平台/设置表</span></td>
+</tr>
+</table>
 </div>
 
-<!-- 计算公式汇总 -->
-<h2>附录：核心计算公式汇总</h2>
+<!-- ===== 12. 数据联动全景 ===== -->
+<h2 id="s12">十二、数据联动全景图</h2>
 <div class="card">
-<h3>贷款利息</h3>
-<div class="formula">贷款月利息 = SUM(RepaymentPlan.interest) WHERE status='pending' AND due_date 在当月</div>
+<pre style="font-size:11px;color:#ccc;white-space:pre;overflow-x:auto;line-height:2">
+┌─────────────────────────────────────────────────────────────────┐
+│                         操  作  入  口                            │
+├──────────┬──────────┬──────────┬──────────┬──────────┬─────────┤
+│ 借贷管理   │ 信用卡    │ POS刷卡   │ 分期管理   │ 房贷管理   │ 收支管理  │
+│ 新增/还款  │ 全额/最低  │ 新增/退款  │ 还一期     │ 更新本金   │ 新增/编辑 │
+└────┬─────┴────┬─────┴────┬─────┴────┬─────┴────┬─────┴────┬────┘
+     │          │          │          │          │          │
+     ▼          ▼          ▼          ▼          ▼          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    数  据  基  础  层                              │
+│  Loan / RepaymentPlan / CreditCardBill / PosSwipe /              │
+│  CardInstallment / Mortgage / Income / Expense / CashRecord      │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    快  照  服  务  层                              │
+│  compute_snapshot() → 总负债/贷款负债/信用卡负债/分期负债/房贷负债   │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │
+         ┌───────────────────────┼───────────────────────┐
+         ▼                       ▼                       ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│    仪  表  盘     │  │   统 计 报 告    │  │   V2 风 险      │
+│ 总负债/净资产     │  │ 利息统计/缺口    │  │ 燃烧率/生存线    │
+│ 利息/手续费      │  │ 平台分布/雪崩    │  │ 债务自由/破裂    │
+│ 预算执行率       │  │ 支出分类/POS     │  │ 利息消耗率       │
+│ 负债分布/趋势    │  │ 负债预测         │  │ 风险评级A~E     │
+│ 缺口走势/净值    │  │                 │  │                 │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 ▼
+                    ┌─────────────────────┐
+                    │   债 务 模 拟 器     │
+                    │ 收入/提前还款模拟     │
+                    │ 风险评级拆解         │
+                    └─────────────────────┘
+</pre>
 
-<h3>分期手续费</h3>
-<div class="formula">每期手续费 = total_fee ÷ periods
-当月手续费 = SUM(每期手续费 × 到期日落在当月的期数)</div>
-
-<h3>房贷月利息</h3>
-<div class="formula">月利息 = 剩余本金 × 年利率 ÷ 12</div>
-
-<h3>信用卡负债</h3>
-<div class="formula">每张卡负债 = 最新一期账单 (账单金额 - 已还金额)，status != 'paid'
-如果已还清 → 负债 = 0</div>
-
-<h3>净资产</h3>
-<div class="formula">净资产 = 手头现金 - 总负债</div>
-
-<h3>风险综合评级</h3>
-<div class="formula">总分 = Σ(维度分 × 权重)
-A=1分, B=2分, C=3分, D=4分, E=5分
-1.0~1.5→A安全 | 1.5~2.5→B轻度 | 2.5~3.5→C中度 | 3.5~4.5→D高风险 | 4.5~5.0→E极高</div>
-
-<h3>提前还款节省利息</h3>
-<div class="formula">每月节省 = 提前还款金额 × 年利率 ÷ 12
-一年节省 = 提前还款金额 × 年利率
-十年节省 = 提前还款金额 × 年利率 × 10</div>
+<h4>关键联动规则</h4>
+<div class="flow">
+1. <strong>收入/支出变化</strong> → 生存线 → 债务自由 → 风险评级<br>
+2. <strong>标记还款(贷款/分期)</strong> → 月减少本金↑ → 债务燃烧率↓ → 总负债↓<br>
+3. <strong>信用卡全额还款</strong> → 该卡负债清零 → 总负债↓ → 净资产↑<br>
+4. <strong>录入手头现金</strong> → 现金流破裂预警 → 净资产 → 风险评级<br>
+5. <strong>修改账单利息</strong> → 月利息→V2利息消耗率→统计报告利息统计<br>
+6. <strong>修改POS手续费</strong> → V2债务燃烧率(手续费) → 信用卡账单金额<br>
+7. <strong>修改分期费率</strong> → 每月手续费→月利息→利息统计<br>
+8. <strong>设置月预算</strong> → 仪表盘预算执行率<br>
+9. <strong>删除任何债务记录</strong> → 总负债↓ → 所有指标反向变化<br>
+10. <strong>修改任何记录的月份(period_value/due_date)</strong> → 该月份所有统计重新计算
+</div>
 </div>
 
-<a href="/static/finance.html" class="back-link">← 返回财智管家</a>
+<a href="/static/finance.html" style="display:inline-block;margin-top:30px;color:var(--r);text-decoration:none;font-size:14px">← 返回财智管家</a>
 <br><br>
 </div>
 </body>
