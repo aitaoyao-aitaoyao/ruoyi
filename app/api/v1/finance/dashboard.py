@@ -108,9 +108,11 @@ def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_
     for loan in db.query(Loan).filter(Loan.status == "active").all():
         first_rp = db.query(RepaymentPlan).filter(
             RepaymentPlan.loan_id == loan.id,
-            RepaymentPlan.status == "pending"
-        ).order_by(RepaymentPlan.period_no).first()
-        if not first_rp or first_rp.due_date > cutoff:
+            RepaymentPlan.status == "pending",
+            RepaymentPlan.due_date >= today,
+            RepaymentPlan.due_date <= cutoff
+        ).order_by(RepaymentPlan.due_date).first()
+        if not first_rp:
             continue
         platform_name = loan.platform.name if loan.platform else ""
         key = f"{platform_name}_{loan.person_id}"
