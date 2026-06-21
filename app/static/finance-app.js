@@ -1513,6 +1513,12 @@ const ReportsPage = {
             <tbody><tr v-for="r in debtSummary.loan" :key="r.platform">
                 <td>{{ r.platform }}</td><td>{{ r.count }}</td><td>¥{{ fmt(r.total_amount) }}</td>
                 <td style="color:var(--red)">¥{{ fmt(r.pending_principal) }}</td><td style="color:var(--yellow)">¥{{ fmt(r.pending_interest) }}</td>
+            </tr>
+            <tr style="font-weight:bold;background:rgba(255,255,255,0.03)">
+                <td>合计</td><td>{{ debtSummary.loan.reduce((s,r)=>s+r.count,0) }}</td>
+                <td>¥{{ fmt(debtSummary.loan.reduce((s,r)=>s+r.total_amount,0)) }}</td>
+                <td style="color:var(--red)">¥{{ fmt(debtSummaryLoanTotal) }}</td>
+                <td style="color:var(--yellow)">¥{{ fmt(debtSummary.loan.reduce((s,r)=>s+r.pending_interest,0)) }}</td>
             </tr></tbody>
         </table>
         <div class="section-title" style="font-size:12px;color:var(--yellow)">分期剩余</div>
