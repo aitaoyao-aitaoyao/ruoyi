@@ -90,7 +90,7 @@ def get_overdue_repayments(db: Session = Depends(get_db), user: User = Depends(g
         # 逾期15-90天自动处理（超90天的需要人工确认，可能是历史数据问题）
         if 15 <= days <= 90:
             rp.status = "paid"
-            rp.paid_date = rp.due_date + timedelta(days=15)
+            rp.paid_date = datetime.utcnow()
             # 自动插入还款记录，关联该人员名下的第一张信用卡
             from app.models import CreditCardTransaction
             card = db.query(CreditCard).filter(CreditCard.person_id == rp.person_id).first()

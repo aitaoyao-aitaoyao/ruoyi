@@ -173,7 +173,7 @@ def get_v2_dashboard(db: Session = Depends(get_db), user: User = Depends(get_cur
     # =============================================
     # 指标 4: 现金流破裂预警（月）
     # =============================================
-    cash_gap = monthly_income - monthly_expense - monthly_interest
+    cash_gap = round(monthly_income - monthly_expense - monthly_interest, 2)  # 与生存线保持一致
     if cash_gap < 0 and cash_on_hand > 0:
         cash_flow_rupture = round(cash_on_hand / abs(cash_gap), 1)
         rupture_formatted = f"{cash_flow_rupture:.0f} 个月"
@@ -186,9 +186,9 @@ def get_v2_dashboard(db: Session = Depends(get_db), user: User = Depends(get_cur
         rupture_desc = "当月现金流为正"
     else:
         cash_flow_rupture = None
-        rupture_formatted = "未录入现金"
+        rupture_formatted = "无现金储备"
         rupture_risk = {"risk_level": "danger", "risk_color": "#e94560", "risk_label": "高危"}
-        rupture_desc = "请在设置中录入手头现金余额"
+        rupture_desc = "手头现金为0，无应急缓冲"
 
     # =============================================
     # 指标 5: 利息消耗率

@@ -15,20 +15,24 @@ def compute_snapshot(db: Session, snapshot_date: date) -> dict:
             RepaymentPlan.loan_id == loan.id,
             RepaymentPlan.status == "pending"
         ).scalar() or 0.0
-        if pending_principal > 0:
-            loan_debt += pending_principal
+        plan_count = db.query(func.count(RepaymentPlan.id)).filter(
+            RepaymentPlan.loan_id == loan.id
+        ).scalar() or 0
+        if plan_count > 0:
+            loan_debt += pending_principal  # 已有还款计划，用待还本金（可能为0）
         else:
-            loan_debt += loan.amount
+            loan_debt += loan.amount  # 无还款计划（灵活期限等），用全额
 
-    # 信用卡负债 = 从未还账单计算（不包含已还清的账单）
+    # 信用卡负债 = 从未还账单计算（汇总所有未还账单）
     card_debt = 0.0
     active_cards = db.query(CreditCard).filter(CreditCard.status == "active").all()
     for card in active_cards:
-        latest_bill = db.query(CreditCardBill).filter(
-            CreditCardBill.card_id == card.id
-        ).order_by(CreditCardBill.bill_month.desc()).first()
-        if latest_bill and latest_bill.status != "paid":
-            card_debt += max(0, latest_bill.bill_amount - latest_bill.paid_amount)
+        unpaid_bills = db.query(CreditCardBill).filter(
+            CreditCardBill.card_id == card.id,
+            CreditCardBill.status != "paid"
+        ).all()
+        for bill in unpaid_bills:
+            card_debt += max(0, bill.bill_amount - bill.paid_amount)
 
     installment_debt = 0.0
     installments = db.query(CardInstallment).all()
