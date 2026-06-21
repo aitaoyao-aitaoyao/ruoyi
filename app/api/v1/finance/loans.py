@@ -45,7 +45,7 @@ def create_loan(data: schemas.LoanCreate, db: Session = Depends(get_db), user: U
     if data.repay_day:
         for rp in plan:
             d = rp["due_date"]
-            rp["due_date"] = date(d.year, d.month, min(data.repay_day, 28))
+            rp["due_date"] = date_type(d.year, d.month, min(data.repay_day, 28))
     if not data.end_date:
         data.end_date = data.start_date + relativedelta(months=data.periods)
     if is_total_interest:
@@ -138,7 +138,7 @@ def regenerate_plan(loan_id: int, db: Session = Depends(get_db), user: User = De
     if loan.repay_day:
         for rp in plan:
             d = rp["due_date"]
-            rp["due_date"] = date(d.year, d.month, min(loan.repay_day, 28))
+            rp["due_date"] = date_type(d.year, d.month, min(loan.repay_day, 28))
     # Create new repayment plans
     for i, p in enumerate(plan):
         status = "paid" if i < paid else "pending"
