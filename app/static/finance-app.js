@@ -273,6 +273,9 @@ const DashboardPage = {
     <div class="chart-row">
         <div class="chart-box" style="grid-column: 1 / -1"><div class="title">月度收支缺口（近12个月）</div><div ref="gapChart" class="chart-inner"></div></div>
     </div>
+    <div class="chart-row">
+        <div class="chart-box" style="grid-column: 1 / -1"><div class="title">净资产趋势（近12个月）</div><div ref="netWorthChart" class="chart-inner" style="height:260px"></div></div>
+    </div>
 
     <!-- 利息明细弹窗 -->
     <div v-if="showInterestModal" class="modal-overlay" @click.self="showInterestModal = false">
@@ -303,7 +306,7 @@ const DashboardPage = {
 </div>`,
     data() {
         return {
-            dash: {}, reminders: [], snapshots: [],
+            dash: {}, reminders: [], snapshots: [], cashHistory: [],
             showInterestModal: false,
             interestDetail: { total: 0, period: '', items: [] },
             v2: { period: '', inputs: {}, metrics: {} },
@@ -315,7 +318,8 @@ const DashboardPage = {
         try { this.snapshots = await api('/reports/snapshots?months=12'); } catch(e) {}
         try { this.v2 = await api('/v2/dashboard'); } catch(e) {}
         try { const riskData = await api('/v2/risk-assessment'); this.v2.risk = riskData; } catch(e) {}
-        this.$nextTick(() => { this.renderPie(); this.renderTrend(); this.renderGap(); });
+        try { this.cashHistory = await api('/settings/cash/history?limit=12'); } catch(e) {}
+        this.$nextTick(() => { this.renderPie(); this.renderTrend(); this.renderGap(); this.renderNetWorth(); });
     },
     computed: {
         netWorth() {
@@ -400,6 +404,44 @@ const DashboardPage = {
                         ]
                     });
                 });
+        },
+        renderNetWorth() {
+            const el = this.$refs.netWorthChart; if (!el) return;
+            const chart = this._initChart(el);
+            if (!this.snapshots || !this.snapshots.length) {
+                chart.setOption({ title: { text: '暂无数据', left: 'center', top: 'center', textStyle: { color: '#888', fontSize: 13 } } });
+                return;
+            }
+            const dates = this.snapshots.map(s => s.snapshot_date);
+            const debtData = this.snapshots.map(s => s.total_debt);
+            // Match cash to snapshot months
+            const cashMap = {};
+            (this.cashHistory || []).forEach(r => {
+                const m = r.recorded_at ? r.recorded_at.substring(0, 7) : '';
+                cashMap[m] = r.amount;
+            });
+            const cashData = dates.map(d => {
+                const m = d.substring(0, 7);
+                return cashMap[m] || 0;
+            });
+            const netWorthData = dates.map((d, i) => cashData[i] - debtData[i]);
+
+            chart.setOption({
+                tooltip: { trigger: 'axis', formatter: function(params) {
+                    let s = '<b>' + params[0].axisValue + '</b><br/>';
+                    params.forEach(p => { s += p.marker + ' ' + p.seriesName + ': ¥' + Math.abs(p.value).toLocaleString() + (p.value < 0 ? ' (负)' : ''); });
+                    return s;
+                }},
+                grid: { left: 70, right: 20, top: 20, bottom: 30 },
+                legend: { data: ['总负债', '总资产(现金)', '净资产'], textStyle: { color: '#888', fontSize: 11 }, top: 0 },
+                xAxis: { type: 'category', data: dates, axisLabel: { color: '#888', fontSize: 10, rotate: 30 } },
+                yAxis: { type: 'value', axisLabel: { color: '#888', fontSize: 10, formatter: v => axisUnit(v) }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },
+                series: [
+                    { name: '总负债', type: 'line', data: debtData, lineStyle: { color: '#e94560', width: 2 }, itemStyle: { color: '#e94560' }, symbol: 'circle', symbolSize: 4 },
+                    { name: '总资产(现金)', type: 'line', data: cashData, lineStyle: { color: '#00d2a0', width: 2 }, itemStyle: { color: '#00d2a0' }, symbol: 'diamond', symbolSize: 4 },
+                    { name: '净资产', type: 'line', data: netWorthData, lineStyle: { color: '#4facfe', width: 2 }, itemStyle: { color: '#4facfe' }, areaStyle: { color: 'rgba(79,172,254,0.1)' }, symbol: 'triangle', symbolSize: 4 },
+                ]
+            });
         }
     }
 };
