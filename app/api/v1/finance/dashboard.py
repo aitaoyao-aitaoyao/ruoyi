@@ -108,17 +108,29 @@ def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_
         RepaymentPlan.due_date >= today,
         RepaymentPlan.due_date <= cutoff,
     ).all()
+    # 按贷款合并多条还款计划为一条提醒
+    loan_map = {}
     for rp in rps:
         platform_name = rp.loan.platform.name if rp.loan and rp.loan.platform else ""
-        loan_label = f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}"
+        key = f"{platform_name}_{rp.person_id}"
+        if key not in loan_map:
+            platform_name = rp.loan.platform.name if rp.loan and rp.loan.platform else ""
+            loan_map[key] = {
+                "name": f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}",
+                "person_name": rp.person.name if rp.person else "",
+                "due_date": rp.due_date,
+                "amount": 0,
+                "days_left": 999,
+            }
+        d = loan_map[key]
+        d["amount"] += rp.total_amount
+        d["due_date"] = min(d["due_date"], rp.due_date)
+        d["days_left"] = min(d["days_left"], (rp.due_date - today).days)
+    for d in loan_map.values():
         reminders.append(schemas.RepayReminderItem(
-            type="loan",
-            name=loan_label,
-            person_name=rp.person.name if rp.person else "",
-            card_last4="",
-            due_date=rp.due_date,
-            amount=rp.total_amount,
-            days_left=(rp.due_date - today).days,
+            type="loan", name=d["name"], person_name=d["person_name"],
+            card_last4="", due_date=d["due_date"], amount=round(d["amount"], 2),
+            days_left=d["days_left"],
         ))
 
     # 信用卡 + 分期合并提醒（按卡汇总）
