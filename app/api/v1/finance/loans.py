@@ -44,11 +44,22 @@ def create_loan(data: schemas.LoanCreate, db: Session = Depends(get_db), user: U
     plan = _fix_plan_dates(plan)
     if not data.end_date:
         data.end_date = data.start_date + relativedelta(months=data.periods)
-    # 如果使用总利息反推，将 rate_type 改为 monthly，rate 改为推导出的月利率
     if is_total_interest:
         data.rate = round(monthly_rate, 6)
         data.rate_type = "monthly"
-    return crud.create_loan(db, data, plan)
+
+    # 创建贷款和还款计划
+    loan = crud.create_loan(db, data, plan)
+
+    # 录入时已还的期数直接标记为 paid，不产生逾期
+    if data.paid_periods > 0:
+        for rp in loan.repayments:
+            if rp.period_no <= data.paid_periods:
+                rp.status = "paid"
+                rp.paid_date = rp.due_date
+        db.commit()
+        db.refresh(loan)
+    return loan
 
 
 @router.get("/", response_model=list[schemas.LoanRead])

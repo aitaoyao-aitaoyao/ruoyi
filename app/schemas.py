@@ -295,6 +295,7 @@ class LoanCreate(BaseModel):
     start_date: date
     end_date: Optional[date] = None
     periods: int
+    paid_periods: int = 0
     note: str = ""
 
     @field_validator("rate_type")
