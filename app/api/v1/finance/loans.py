@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from dateutil.relativedelta import relativedelta
 from app.db import get_db
 from app.auth import get_current_user
-from app.models import User, RepaymentPlan
+from app.models import User, Loan, RepaymentPlan
 from app import crud, schemas
 from app.finance.calc_engine import convert_to_monthly_rate, calc_equal_installment_plan, calc_interest_first_plan, calc_bullet_plan
 
@@ -53,7 +53,39 @@ def create_loan(data: schemas.LoanCreate, db: Session = Depends(get_db), user: U
 
 @router.get("/", response_model=list[schemas.LoanRead])
 def list_loans(person_id: int = Query(None), db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """获取借款列表，同时自动标记所有已还期数"""
+    _auto_pay_periods(db)
     return crud.get_loans(db, person_id)
+
+
+def _auto_pay_periods(db: Session):
+    """遍历所有活跃借款，将 paid_periods 范围内的待还计划自动标记为已还"""
+    active_loans = db.query(Loan).filter(Loan.status == "active", Loan._paid_periods > 0).all()
+    updated = False
+    for loan in active_loans:
+        paid_limit = loan.paid_periods  # 使用 property 获取真实已还数
+        if paid_limit <= 0:
+            continue
+        pending = db.query(RepaymentPlan).filter(
+            RepaymentPlan.loan_id == loan.id,
+            RepaymentPlan.status == "pending",
+            RepaymentPlan.period_no <= paid_limit
+        ).all()
+        for rp in pending:
+            rp.status = "paid"
+            rp.paid_date = rp.due_date  # 录入时即已还，用到期日
+            updated = True
+    if updated:
+        db.commit()
+    # 检查并自动结清贷款
+    for loan in active_loans:
+        if loan.paid_periods <= 0: continue
+        all_paid = db.query(RepaymentPlan).filter(
+            RepaymentPlan.loan_id == loan.id, RepaymentPlan.status == "pending"
+        ).count() == 0
+        if all_paid and loan.status == "active":
+            loan.status = "closed"
+            db.commit()
 
 
 @router.get("/{loan_id}", response_model=schemas.LoanRead)
