@@ -701,6 +701,9 @@ class CreditCardBillUpdate(BaseModel):
     paid_amount: Optional[float] = None
     interest: Optional[float] = None
     fee: Optional[float] = None
+    bill_start: Optional[date] = None
+    bill_end: Optional[date] = None
+    due_date: Optional[date] = None
     status: Optional[str] = None
     note: Optional[str] = None
 

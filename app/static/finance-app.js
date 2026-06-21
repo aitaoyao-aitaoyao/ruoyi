@@ -947,6 +947,11 @@ const CreditCardsPage = {
                 <div class="form-group"><label>本期利息</label><input v-model.number="billForm.interest" type="number" min="0" step="0.01"></div>
                 <div class="form-group"><label>本期手续费</label><input v-model.number="billForm.fee" type="number" min="0" step="0.01"></div>
             </div>
+            <div class="form-row">
+                <div class="form-group"><label>账单周期开始</label><input v-model="billForm.bill_start" type="date"></div>
+                <div class="form-group"><label>账单周期结束</label><input v-model="billForm.bill_end" type="date"></div>
+            </div>
+            <div class="form-group"><label>还款截止日</label><input v-model="billForm.due_date" type="date"></div>
             <div class="form-group"><label>备注</label><input v-model="billForm.note"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
                 <button class="btn btn-secondary" @click="billEditModal.show = false">取消</button>
@@ -956,7 +961,7 @@ const CreditCardsPage = {
     </div>
 </div>`,
     data() {
-        return { items: [], persons: [], cardBills: {}, viewingCard: null, showModal: false, editing: null, form: { person_id: 1, bank: '', card_number_last4: '', credit_limit: 0, interest_rate: 0.1825, bill_day: 1, due_day: 25 }, billEditModal: { show: false, billId: null, cardId: null, bill_month: '' }, billForm: { bill_amount: 0, paid_amount: 0, interest: 0, fee: 0, note: '' } };
+        return { items: [], persons: [], cardBills: {}, viewingCard: null, showModal: false, editing: null, form: { person_id: 1, bank: '', card_number_last4: '', credit_limit: 0, interest_rate: 0.1825, bill_day: 1, due_day: 25 }, billEditModal: { show: false, billId: null, cardId: null, bill_month: '' }, billForm: { bill_amount: 0, paid_amount: 0, interest: 0, fee: 0, bill_start: '', bill_end: '', due_date: '', note: '' } };
     },
     async mounted() { await this.load(); },
     methods: {
@@ -982,7 +987,7 @@ const CreditCardsPage = {
         },
         openBillEdit(b) {
             this.billEditModal = { show: true, billId: b.id, cardId: b.card_id, bill_month: b.bill_month };
-            this.billForm = { bill_amount: b.bill_amount, paid_amount: b.paid_amount, interest: b.interest, fee: b.fee, note: b.note || '' };
+            this.billForm = { bill_amount: b.bill_amount, paid_amount: b.paid_amount, interest: b.interest, fee: b.fee, bill_start: b.bill_start, bill_end: b.bill_end, due_date: b.due_date, note: b.note || '' };
         },
         async saveBill() {
             try {
