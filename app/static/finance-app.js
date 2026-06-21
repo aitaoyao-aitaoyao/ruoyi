@@ -330,7 +330,7 @@ const DashboardPage = {
     async mounted() {
         try { this.dash = await api('/dashboard'); } catch(e) { this.showToast(e.message, 'error'); }
         try { this.reminders = await api('/repay-reminders'); } catch(e) { this.showToast(e.message, 'error'); }
-        try { this.overdueRepayments = await api('/repay-overdue'); } catch(e) {}
+        try { const od = await api('/repay-overdue'); this.overdueRepayments = od.items || []; if (od.auto_processed && od.auto_processed.length) { this.showToast('系统已自动处理 ' + od.auto_processed.length + ' 条逾期15天以上的还款'); } } catch(e) {}
         try { this.snapshots = await api('/reports/snapshots?months=12'); } catch(e) {}
         try { this.v2 = await api('/v2/dashboard'); } catch(e) {}
         try { const riskData = await api('/v2/risk-assessment'); this.v2.risk = riskData; } catch(e) {}
@@ -1057,7 +1057,7 @@ const CardTransactionsPage = {
             <td>{{ t.id }}</td><td>{{ t.person?.name || '-' }}</td><td>{{ t.card?.bank }} {{ t.card?.card_number_last4 }}</td>
             <td><span :class="'tag ' + (t.trans_type === '还款' ? 'green' : 'red')">{{ t.trans_type }}</span></td>
             <td :style="{ color: t.trans_type === '还款' ? 'var(--green)' : 'var(--red)' }">¥{{ fmt(t.amount) }}</td>
-            <td>{{ t.description }}</td><td>{{ fmtDate(t.trans_date) }}</td>
+            <td>{{ t.description }} <span v-if="(t.description||'').startsWith('[系统自动]')" class="tag yellow" style="font-size:9px">自动</span></td><td>{{ fmtDate(t.trans_date) }}</td>
             <td><button class="btn btn-secondary btn-xs" @click="openEdit(t)" style="margin-right:4px">编辑</button><button class="btn btn-danger btn-xs" @click="remove(t.id)">删除</button></td>
         </tr></tbody>
     </table>

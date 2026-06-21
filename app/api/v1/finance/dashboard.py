@@ -82,22 +82,67 @@ def get_overdue_repayments(db: Session = Depends(get_db), user: User = Depends(g
     ).order_by(RepaymentPlan.due_date).all()
 
     result = []
+    auto_processed = []
     for rp in items:
         loan = rp.loan
         platform_name = loan.platform.name if loan and loan.platform else ""
-        result.append({
-            "id": rp.id,
-            "loan_id": rp.loan_id,
-            "period_no": rp.period_no,
-            "amount": rp.total_amount,
-            "principal": rp.principal,
-            "interest": rp.interest,
-            "due_date": str(rp.due_date),
-            "days_overdue": (today - rp.due_date).days,
-            "name": f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}",
-            "person_name": rp.person.name if rp.person else "",
-        })
-    return result
+        days = (today - rp.due_date).days
+        # 逾期超过15天自动处理
+        if days >= 15:
+            rp.status = "paid"
+            rp.paid_date = rp.due_date + timedelta(days=15)
+            # 自动插入还款记录
+            from app.models import CreditCardTransaction
+            # 找该人员的任意一张卡作为关联
+            card = db.query(CreditCard).filter(CreditCard.person_id == rp.person_id).first()
+            txn = CreditCardTransaction(
+                card_id=card.id if card else 1,
+                person_id=rp.person_id,
+                amount=rp.total_amount,
+                trans_type="还款",
+                description=f"[系统自动] 逾期{days}天自动还款 - {platform_name} 第{rp.period_no}期",
+                trans_date=datetime.utcnow(),
+            )
+            db.add(txn)
+            db.commit()
+            # 检查贷款是否全部还清
+            if loan and loan.periods > 0:
+                all_paid = db.query(RepaymentPlan).filter(
+                    RepaymentPlan.loan_id == loan.id,
+                    RepaymentPlan.status == "pending"
+                ).count() == 0
+                if all_paid:
+                    loan.status = "closed"
+                    db.commit()
+            auto_processed.append({"id": rp.id, "name": f"{platform_name} 贷款", "period_no": rp.period_no, "txn_id": txn.id})
+        else:
+            result.append({
+                "id": rp.id,
+                "loan_id": rp.loan_id,
+                "period_no": rp.period_no,
+                "amount": rp.total_amount,
+                "principal": rp.principal,
+                "interest": rp.interest,
+                "due_date": str(rp.due_date),
+                "days_overdue": days,
+                "name": f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}",
+                "person_name": rp.person.name if rp.person else "",
+            })
+
+    # 刷新快照（负债已变化）
+    if auto_processed:
+        try:
+            from app.finance.snapshot_service import compute_snapshot
+            from app import crud as crud_module
+            snap = crud_module.get_today_snapshot(db, today)
+            if snap:
+                db.delete(snap)
+                db.commit()
+            data = compute_snapshot(db, today)
+            crud_module.create_snapshot(db, data)
+        except: pass
+
+    return {"items": result, "auto_processed": auto_processed, "total_overdue": len(result), "total_auto_processed": len(auto_processed)}
 
 
 @router.get("/repay-reminders", response_model=list[schemas.RepayReminderItem])
