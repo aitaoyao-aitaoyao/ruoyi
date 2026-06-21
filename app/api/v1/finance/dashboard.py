@@ -102,29 +102,26 @@ def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_
     today = date.today()
     cutoff = today + timedelta(days=7)
     reminders = []
-
-    rps = db.query(RepaymentPlan).filter(
-        RepaymentPlan.status == "pending",
-        RepaymentPlan.due_date >= today,
-        RepaymentPlan.due_date <= cutoff,
-    ).order_by(RepaymentPlan.due_date).all()
-
     loan_map = {}
-    for rp in rps:
-        platform_name = rp.loan.platform.name if rp.loan and rp.loan.platform else ""
-        key = f"{platform_name}_{rp.person_id}"
+
+    # 每笔活跃贷款取最早待还计划，不限日期
+    for loan in db.query(Loan).filter(Loan.status == "active").all():
+        first_rp = db.query(RepaymentPlan).filter(
+            RepaymentPlan.loan_id == loan.id,
+            RepaymentPlan.status == "pending"
+        ).order_by(RepaymentPlan.period_no).first()
+        if not first_rp:
+            continue
+        platform_name = loan.platform.name if loan.platform else ""
+        key = f"{platform_name}_{loan.person_id}"
         if key not in loan_map:
-            loan_map[key] = {
-                "name": f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}",
-                "person_name": rp.person.name if rp.person else "",
-                "due_date": rp.due_date,
-                "amount": 0,
-                "days_left": 999,
-            }
+            loan_map[key] = {"name": f"{platform_name} 贷款" if platform_name else f"贷款 #{loan.id}",
+                "person_name": loan.person.name if loan.person else "",
+                "due_date": first_rp.due_date, "amount": 0, "days_left": 999}
         d = loan_map[key]
-        d["amount"] += rp.total_amount
-        d["due_date"] = min(d["due_date"], rp.due_date)
-        d["days_left"] = min(d["days_left"], (rp.due_date - today).days)
+        d["amount"] += first_rp.total_amount
+        d["due_date"] = min(d["due_date"], first_rp.due_date)
+        d["days_left"] = min(d["days_left"], (first_rp.due_date - today).days)
     for d in loan_map.values():
         reminders.append(schemas.RepayReminderItem(
             type="loan", name=d["name"], person_name=d["person_name"],
