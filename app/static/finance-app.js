@@ -1997,6 +1997,10 @@ const SettingsPage = {
         </div>
     </div>
     <div class="section-card">
+        <h3 style="margin:0 0 12px 0">数据导出</h3>
+        <button class="btn btn-secondary" @click="exportData">导出 CSV（Excel可打开）</button>
+    </div>
+    <div class="section-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <h3 style="margin:0">数据管理</h3>
             <button class="btn btn-danger btn-sm" @click="clearAllData">清空所有财务数据</button>
@@ -2029,6 +2033,21 @@ const SettingsPage = {
     },
     methods: {
         fmt,
+        exportData() {
+            const token = getToken();
+            const a = document.createElement('a');
+            a.href = '/api/v1/finance/export/all';
+            if (token) a.href += '?token=' + encodeURIComponent(token);
+            // Use fetch to get the file with auth header
+            fetch('/api/v1/finance/export/all', { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(r => r.blob()).then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = 'caizhiguanjia_export.csv';
+                    a.click(); URL.revokeObjectURL(url);
+                    this.showToast('导出成功');
+                }).catch(e => this.showToast('导出失败', 'error'));
+        },
         async saveBudget() {
             if (!this.budgetForm.amount && this.budgetForm.amount !== 0) return this.showToast('请输入预算金额', 'error');
             try { await api('/settings/app', { method: 'POST', body: JSON.stringify({ key: 'budget', value: String(this.budgetForm.amount) }) }); this.budgetAmount = this.budgetForm.amount; this.showToast('预算已保存'); } catch(e) { this.showToast(e.message, 'error'); }

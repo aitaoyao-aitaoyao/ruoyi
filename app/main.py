@@ -19,6 +19,7 @@ from app.api.v1.finance import credit_cards, card_transactions, card_installment
 from app.api.v1.finance import mortgages, incomes, expenses, fee_configs
 from app.api.v1.finance import dashboard as fin_dashboard, calc, transactions, reports, recycle_bin
 from app.api.v1.finance import v2_dashboard, settings, v2_simulator
+from app.api.v1.finance import export as fin_export
 
 # 自动创建所有数据库表（如果表已存在则跳过）
 Base.metadata.create_all(bind=engine)
@@ -100,6 +101,7 @@ app.include_router(fin_dashboard.router, prefix="/api/v1")
 app.include_router(v2_dashboard.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
 app.include_router(v2_simulator.router, prefix="/api/v1")
+app.include_router(fin_export.router, prefix="/api/v1")
 app.include_router(calc.router, prefix="/api/v1")
 app.include_router(transactions.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
