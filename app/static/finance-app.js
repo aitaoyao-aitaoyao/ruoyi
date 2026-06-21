@@ -588,7 +588,7 @@ const LoansPage = {
             <td><span class="tag blue">{{ repayMethodLabel(l.repay_method) }}</span></td>
             <td>{{ l.periods }}</td>
             <td>{{ l.paid_periods || 0 }}</td>
-            <td :style="{ color: (l.Math.max(0, remaining_periods || 0)) > 0 ? 'var(--yellow)' : 'var(--green)' }">{{ l.Math.max(0, remaining_periods || 0) }}</td>
+            <td :style="{ color: (l.remaining_periods || 0) > 0 ? 'var(--yellow)' : 'var(--green)' }">{{ l.remaining_periods || 0 }}</td>
             <td><span :class="'tag ' + (l.status === 'active' ? 'green' : 'red')">{{ l.status === 'active' ? '还款中' : '已结清' }}</span></td>
             <td>
                 <button class="btn btn-secondary btn-xs" @click="openEdit(l)" style="margin-right:4px">编辑</button>
@@ -1130,8 +1130,8 @@ const InstallmentsPage = {
             <td>¥{{ fmt(i.amount) }}</td><td>{{ i.periods }}</td><td>{{ (i.period_rate * 100).toFixed(2) }}%</td>
             <td><span class="tag yellow">{{ i.annual_rate ? (i.annual_rate * 100).toFixed(2) + '%' : '-' }}</span></td>
             <td>¥{{ fmt(i.period_total) }}</td><td>{{ i.paid_periods }}</td>
-            <td :style="{ color: (i.Math.max(0, remaining_periods || 0)) > 0 ? 'var(--yellow)' : 'var(--green)' }">{{ i.Math.max(0, remaining_periods || 0) }}</td>
-            <td :style="{ color: 'var(--red)' }">¥{{ fmt((i.Math.max(0, remaining_periods || 0)) * i.period_total) }}</td>
+            <td :style="{ color: (i.remaining_periods || 0) > 0 ? 'var(--yellow)' : 'var(--green)' }">{{ i.remaining_periods || 0 }}</td>
+            <td :style="{ color: 'var(--red)' }">¥{{ fmt((i.remaining_periods || 0) * i.period_total) }}</td>
             <td><button class="btn btn-secondary btn-xs" @click="openEdit(i)" style="margin-right:4px">编辑</button><button class="btn btn-secondary btn-xs" @click="payPeriod(i)" style="margin-right:4px">还一期</button><button class="btn btn-danger btn-xs" @click="remove(i.id)">删除</button></td>
         </tr></tbody>
     </table>
