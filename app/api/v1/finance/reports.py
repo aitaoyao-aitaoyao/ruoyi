@@ -6,7 +6,7 @@ from sqlalchemy import func, or_
 from app.db import get_db
 from app.auth import get_current_user, require_role
 from app.models import User
-from app.models import Loan, LoanPlatform, PosSwipe, Income, Expense, RepaymentPlan, DebtSnapshot, CardInstallment, Mortgage, CreditCard
+from app.models import Loan, LoanPlatform, PosSwipe, Income, Expense, RepaymentPlan, DebtSnapshot, CardInstallment, Mortgage, CreditCard, CreditCardBill
 from app import crud, schemas
 
 router = APIRouter(prefix="/finance/reports", tags=["finance-reports"])
@@ -1061,6 +1061,52 @@ def debt_forecast(
         "trends": trends,
         "trend_desc": trend_desc,
         "forecasts": forecasts,
+    }
+
+
+@router.get("/debt-summary")
+def debt_summary(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """按平台/银行汇总各类债务剩余金额。"""
+    from collections import defaultdict
+
+    # 贷款按平台汇总
+    loan_by_platform = defaultdict(lambda: {"count": 0, "total_amount": 0, "pending_principal": 0, "pending_interest": 0})
+    active_loans = db.query(Loan).filter(Loan.status == "active").all()
+    for loan in active_loans:
+        pname = loan.platform.name if loan.platform else "未知"
+        d = loan_by_platform[pname]
+        d["count"] += 1
+        d["total_amount"] += loan.amount
+        d["pending_principal"] += db.query(func.coalesce(func.sum(RepaymentPlan.principal), 0)).filter(
+            RepaymentPlan.loan_id == loan.id, RepaymentPlan.status == "pending").scalar() or 0
+        d["pending_interest"] += db.query(func.coalesce(func.sum(RepaymentPlan.interest), 0)).filter(
+            RepaymentPlan.loan_id == loan.id, RepaymentPlan.status == "pending").scalar() or 0
+
+    # 分期按银行汇总
+    inst_by_bank = defaultdict(lambda: {"count": 0, "total_amount": 0, "remaining": 0})
+    for inst in db.query(CardInstallment).all():
+        bank = inst.card.bank if inst.card else "未知"
+        d = inst_by_bank[bank]
+        d["count"] += 1
+        d["total_amount"] += inst.amount
+        remaining = inst.amount - inst.period_principal * min(inst.paid_periods, inst.periods)
+        if remaining > 0:
+            d["remaining"] += remaining
+
+    # 信用卡账单按银行汇总
+    bill_by_bank = defaultdict(lambda: {"count": 0, "bill_amount": 0, "paid_amount": 0})
+    for b in db.query(CreditCardBill).filter(CreditCardBill.status != "paid").all():
+        card = b.card
+        bank = card.bank if card else "未知"
+        d = bill_by_bank[bank]
+        d["count"] += 1
+        d["bill_amount"] += b.bill_amount
+        d["paid_amount"] += b.paid_amount
+
+    return {
+        "loan": [{"platform": k, **{kk: round(vv, 2) if isinstance(vv, float) else vv for kk, vv in v.items()}} for k, v in sorted(loan_by_platform.items(), key=lambda x: -x[1]["pending_principal"])],
+        "installment": [{"bank": k, **v} for k, v in sorted(inst_by_bank.items(), key=lambda x: -x[1]["remaining"])],
+        "bill": [{"bank": k, "count": v["count"], "bill_amount": round(v["bill_amount"], 2), "paid_amount": round(v["paid_amount"], 2), "unpaid": round(max(0, v["bill_amount"] - v["paid_amount"]), 2)} for k, v in sorted(bill_by_bank.items(), key=lambda x: -(x[1]["bill_amount"] - x[1]["paid_amount"]))],
     }
 
 

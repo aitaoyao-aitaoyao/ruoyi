@@ -1504,6 +1504,33 @@ const ReportsPage = {
 <div>
     <div class="page-header"><h2>统计报告</h2><p>多维度财务数据分析</p></div>
 
+    <!-- 债务汇总 -->
+    <div class="section-title" style="cursor:pointer" @click="showDebtSummary = !showDebtSummary">债务汇总（按平台/银行） <span style="font-size:10px;color:#888">{{ showDebtSummary ? '收起' : '展开' }}</span></div>
+    <div v-if="showDebtSummary && debtSummary">
+        <div class="section-title" style="font-size:12px;color:var(--red)">借贷待还</div>
+        <table class="data-table"><thead><tr><th>平台</th><th>笔数</th><th>原始总额</th><th>待还本金</th><th>待还利息</th></tr></thead>
+            <tbody><tr v-for="r in debtSummary.loan" :key="r.platform">
+                <td>{{ r.platform }}</td><td>{{ r.count }}</td><td>¥{{ fmt(r.total_amount) }}</td>
+                <td style="color:var(--red)">¥{{ fmt(r.pending_principal) }}</td><td style="color:var(--yellow)">¥{{ fmt(r.pending_interest) }}</td>
+            </tr></tbody>
+        </table>
+        <div class="section-title" style="font-size:12px;color:var(--yellow)">分期剩余</div>
+        <table class="data-table"><thead><tr><th>银行</th><th>笔数</th><th>原始总额</th><th>剩余本金</th></tr></thead>
+            <tbody><tr v-for="r in debtSummary.installment" :key="r.bank">
+                <td>{{ r.bank }}</td><td>{{ r.count }}</td><td>¥{{ fmt(r.total_amount) }}</td><td style="color:var(--yellow)">¥{{ fmt(r.remaining) }}</td>
+            </tr></tbody>
+        </table>
+        <div class="section-title" style="font-size:12px;color:var(--blue)">信用卡未还账单</div>
+        <table class="data-table"><thead><tr><th>银行</th><th>笔数</th><th>账单总额</th><th>已还</th><th>未还</th></tr></thead>
+            <tbody><tr v-for="r in debtSummary.bill" :key="r.bank">
+                <td>{{ r.bank }}</td><td>{{ r.count }}</td><td>¥{{ fmt(r.bill_amount) }}</td><td style="color:var(--green)">¥{{ fmt(r.paid_amount) }}</td><td style="color:var(--red)">¥{{ fmt(r.unpaid) }}</td>
+            </tr></tbody>
+        </table>
+        <div style="margin-top:12px;font-size:12px;color:var(--red);text-align:right">
+            不含房贷总负债: ¥{{ fmt(debtSummaryLoanTotal + debtSummaryInstTotal + debtSummaryBillTotal) }}
+        </div>
+    </div>
+
     <!-- 利息统计 -->
     <div class="section-title">利息/手续费统计</div>
     <div class="filter-bar" style="margin-bottom:12px">
@@ -1746,9 +1773,15 @@ const ReportsPage = {
             posCountFrom: '',
             posCountTo: '',
             posCountData: { period: '', total_count: 0, items: [] },
+            showDebtSummary: false,
+            debtSummary: null,
         };
     },
-    computed: {},
+    computed: {
+        debtSummaryLoanTotal() { return this.debtSummary ? this.debtSummary.loan.reduce((s,r) => s + r.pending_principal, 0) : 0; },
+        debtSummaryInstTotal() { return this.debtSummary ? this.debtSummary.installment.reduce((s,r) => s + r.remaining, 0) : 0; },
+        debtSummaryBillTotal() { return this.debtSummary ? this.debtSummary.bill.reduce((s,r) => s + r.unpaid, 0) : 0; },
+    },
     async mounted() {
         try { this.summary = await api('/reports/summary'); } catch(e) {}
         try { this.platformData = await api('/reports/by-platform'); } catch(e) {}
@@ -1758,6 +1791,7 @@ const ReportsPage = {
         await this.loadPriorityPlan();
         await this.loadForecast();
         await this.loadPosCount();
+        try { this.debtSummary = await api('/reports/debt-summary'); } catch(e) {}
         this.$nextTick(() => { this.renderPlatform(); this.renderMonth(); this.renderForecast(); this.renderExpenseCat(); });
     },
     methods: {
