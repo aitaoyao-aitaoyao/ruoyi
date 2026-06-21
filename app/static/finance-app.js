@@ -905,6 +905,7 @@ const CreditCardsPage = {
                         <td>
                             <button v-if="b.status !== 'paid'" class="btn btn-secondary btn-xs" @click="payFull(b.id)" style="margin-right:2px">全额还</button>
                             <button v-if="b.status === 'unpaid' || b.status === 'overdue'" class="btn btn-secondary btn-xs" @click="payMinimum(b.id)" style="margin-right:2px">最低还</button>
+                            <button v-if="b.status === 'paid' || b.status === 'partial'" class="btn btn-secondary btn-xs" @click="undoPayment(b.id)" style="margin-right:2px">撤销</button>
                             <button class="btn btn-secondary btn-xs" @click="openBillEdit(b)">录入</button>
                         </td>
                     </tr></tbody>
@@ -984,6 +985,10 @@ const CreditCardsPage = {
         },
         async payMinimum(billId) {
             try { await api('/credit-card-bills/' + billId + '/pay-minimum', { method: 'POST' }); this.showToast('已标记最低还款'); await this.refreshBills(); } catch(e) { this.showToast(e.message, 'error'); }
+        },
+        async undoPayment(billId) {
+            if (!confirm('确定撤销还款？撤销后该账单恢复为未还状态。')) return;
+            try { await api('/credit-card-bills/' + billId + '/undo-payment', { method: 'POST' }); this.showToast('还款已撤销'); await this.refreshBills(); } catch(e) { this.showToast(e.message, 'error'); }
         },
         openBillEdit(b) {
             this.billEditModal = { show: true, billId: b.id, cardId: b.card_id, bill_month: b.bill_month };

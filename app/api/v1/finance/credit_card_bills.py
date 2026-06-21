@@ -144,3 +144,16 @@ def pay_minimum(bill_id: int, db: Session = Depends(get_db), user: User = Depend
     db.commit()
     db.refresh(bill)
     return bill
+
+
+@router.post("/{bill_id}/undo-payment", response_model=schemas.CreditCardBillRead)
+def undo_payment(bill_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """撤销还款"""
+    bill = crud.get_credit_card_bill(db, bill_id)
+    if not bill:
+        raise HTTPException(status_code=404, detail="账单不存在")
+    bill.paid_amount = 0
+    bill.status = "unpaid"
+    db.commit()
+    db.refresh(bill)
+    return bill
