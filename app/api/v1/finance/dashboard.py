@@ -82,24 +82,40 @@ def get_overdue_repayments(db: Session = Depends(get_db), user: User = Depends(g
     ).order_by(RepaymentPlan.due_date).all()
 
     result = []
+    auto_processed = []
     for rp in items:
         loan = rp.loan
         platform_name = loan.platform.name if loan and loan.platform else ""
         days = (today - rp.due_date).days
-        result.append({
-            "id": rp.id,
-            "loan_id": rp.loan_id,
-            "period_no": rp.period_no,
-            "amount": rp.total_amount,
-            "principal": rp.principal,
-            "interest": rp.interest,
-            "due_date": str(rp.due_date),
-            "days_overdue": days,
-            "name": f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}",
-            "person_name": rp.person.name if rp.person else "",
-        })
-
-    return {"items": result, "total_overdue": len(result)}
+        if days >= 15:
+            rp.status = "paid"
+            rp.paid_date = datetime.utcnow()
+            from app.models import CreditCardTransaction
+            card = db.query(CreditCard).filter(CreditCard.person_id == rp.person_id).first()
+            txn = CreditCardTransaction(
+                card_id=card.id if card else None,
+                person_id=rp.person_id,
+                amount=rp.total_amount,
+                trans_type="还款",
+                description=f"[系统自动] 逾期{days}天 - {platform_name} 第{rp.period_no}期",
+                trans_date=datetime.utcnow(),
+            )
+            db.add(txn)
+            db.commit()
+            if loan and loan.periods > 0:
+                if db.query(RepaymentPlan).filter(RepaymentPlan.loan_id == loan.id, RepaymentPlan.status == "pending").count() == 0:
+                    loan.status = "closed"
+                    db.commit()
+            auto_processed.append({"id": rp.id, "name": f"{platform_name} 贷款", "period_no": rp.period_no, "txn_id": txn.id})
+        else:
+            result.append({
+                "id": rp.id, "loan_id": rp.loan_id, "period_no": rp.period_no,
+                "amount": rp.total_amount, "principal": rp.principal, "interest": rp.interest,
+                "due_date": str(rp.due_date), "days_overdue": days,
+                "name": f"{platform_name} 贷款" if platform_name else f"贷款 #{rp.loan_id}",
+                "person_name": rp.person.name if rp.person else "",
+            })
+    return {"items": result, "auto_processed": auto_processed, "total_overdue": len(result), "total_auto_processed": len(auto_processed)}
 
 
 @router.get("/repay-reminders", response_model=list[schemas.RepayReminderItem])
