@@ -87,16 +87,14 @@ def get_overdue_repayments(db: Session = Depends(get_db), user: User = Depends(g
         loan = rp.loan
         platform_name = loan.platform.name if loan and loan.platform else ""
         days = (today - rp.due_date).days
-        # 逾期超过15天自动处理
-        if days >= 15:
+        # 逾期15-90天自动处理（超90天的需要人工确认，可能是历史数据问题）
+        if 15 <= days <= 90:
             rp.status = "paid"
             rp.paid_date = rp.due_date + timedelta(days=15)
             # 自动插入还款记录
             from app.models import CreditCardTransaction
-            # 找该人员的任意一张卡作为关联
-            card = db.query(CreditCard).filter(CreditCard.person_id == rp.person_id).first()
             txn = CreditCardTransaction(
-                card_id=card.id if card else 1,
+                card_id=None,
                 person_id=rp.person_id,
                 amount=rp.total_amount,
                 trans_type="还款",

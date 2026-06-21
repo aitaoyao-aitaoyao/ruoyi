@@ -263,7 +263,7 @@ class CreditCard(Base):
 class CreditCardTransaction(Base):
     __tablename__ = "credit_card_transactions"
     id = Column(Integer, primary_key=True, index=True)
-    card_id = Column(Integer, ForeignKey("credit_cards.id"), nullable=False)
+    card_id = Column(Integer, ForeignKey("credit_cards.id"), nullable=True)
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
     amount = Column(Float, nullable=False)
     trans_type = Column(String(10), default="消费")  # 消费 / 还款
