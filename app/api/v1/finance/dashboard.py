@@ -123,11 +123,12 @@ def get_repay_reminders(db: Session = Depends(get_db), user: User = Depends(get_
         d["due_date"] = min(d["due_date"], first_rp.due_date)
         d["days_left"] = min(d["days_left"], (first_rp.due_date - today).days)
     for d in loan_map.values():
-        reminders.append(schemas.RepayReminderItem(
-            type="loan", name=d["name"], person_name=d["person_name"],
-            card_last4="", due_date=d["due_date"], amount=round(d["amount"], 2),
-            days_left=max(0, d["days_left"]),
-        ))
+        if d["due_date"] <= cutoff:
+            reminders.append(schemas.RepayReminderItem(
+                type="loan", name=d["name"], person_name=d["person_name"],
+                card_last4="", due_date=d["due_date"], amount=round(d["amount"], 2),
+                days_left=max(0, d["days_left"]),
+            ))
 
     # 信用卡 + 分期合并提醒（按卡汇总）
     cards = db.query(CreditCard).filter(CreditCard.status == "active").all()
